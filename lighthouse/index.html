@@ -788,15 +788,15 @@ function prepCard(){
   cardCache.p=cardBlob().then(b=>{ if(cardCache.key===key) cardCache.blob=b; return b; });
   return cardCache.p;
 }
-function shareOut(btn,text,withImg){
+function shareOut(btn,text,withImg,link){
   const t=L(), orig=btn.textContent;
   const flash=m=>{btn.textContent=m;setTimeout(()=>btn.textContent=orig,2800);};
   const blob=withImg?cardCache.blob:null;
-  if(withImg&&!blob){ prepCard().then(()=>shareOut(btn,text,withImg)); return; }
-  const copied=copyText(text);
+  if(withImg&&!blob){ prepCard().then(()=>shareOut(btn,text,withImg,link)); return; }
+  const copied=copyText(link?text+'\n'+link:text);
   const fallback=()=>{ if(blob) downloadBlob(blob); copied.then(ok=>flash(blob?t.sharedFallback:(ok?t.textCopied:t.selected))); };
   if(navigator.share){
-    const data={text};
+    const data=link?{text,url:link}:{text};
     if(blob){ const f=new File([blob],'lighthouse-path.png',{type:'image/png'}); if(navigator.canShare&&navigator.canShare({files:[f]})) data.files=[f]; }
     navigator.share(data).then(()=>{ if(data.files) copied.then(ok=>ok&&flash(t.sharedCopied)); },e=>{ if(e&&e.name==='AbortError') return; fallback(); });
     return;
@@ -827,7 +827,11 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- results ---------- */
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function shareLinks(text){ const e=encodeURIComponent(text); return {tg:`https://t.me/share/url?url=${e}`,wa:`https://wa.me/?text=${e}`}; }
+// With a link, Telegram gets it as the shared URL (it renders the page preview) and the message as text; WhatsApp gets both in one text
+function shareLinks(text,link){
+  if(!link){ const e=encodeURIComponent(text); return {tg:`https://t.me/share/url?url=${e}`,wa:`https://wa.me/?text=${e}`}; }
+  return {tg:`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`,wa:`https://wa.me/?text=${encodeURIComponent(text+'\n'+link)}`};
+}
 // The result being shown: the walk just finished, or one opened from a saved link (score, difficulty and date only)
 function cur(){ return S.view||{s:score(),df:S.ans[9],q9:S.ans[8]||0,date:S.doneAt||new Date()}; }
 const fmtDate=d=>d.toLocaleDateString(lang==='ru'?'ru-RU':'en-GB',{day:'numeric',month:'long',year:'numeric'});
@@ -881,10 +885,10 @@ function renderResult(){
   setTimeout(prepCard,250);
   $('save-img').addEventListener('click',async e=>{const b=e.currentTarget;try{downloadBlob(cardCache.blob||await prepCard());flash(b,t.imgSaved);}catch(err){}});
   // The result image goes along only when "Include my result" is checked
-  $('fam-share').addEventListener('click',e=>shareOut(e.currentTarget,$('fam-msg').value,S.incScore));
+  $('fam-share').addEventListener('click',e=>shareOut(e.currentTarget,$('fam-msg').value,S.incScore,INVITE_URL));
   $('inv-share').addEventListener('click',e=>shareOut(e.currentTarget,$('inv-msg').value,false));
   const hc=$('hist-clear'); if(hc) hc.addEventListener('click',()=>{ try{localStorage.removeItem('lh-history');}catch(e){} hc.textContent=t.histCleared; hc.disabled=true; });
-  ['sos','fam','inv'].forEach(k=>{ const ta=$(k+'-msg'); if(!ta) return; const upd=()=>{const l=shareLinks(ta.value); $(k+'-tg').href=l.tg; $(k+'-wa').href=l.wa;}; ta.addEventListener('input',upd); upd(); });
+  ['sos','fam','inv'].forEach(k=>{ const ta=$(k+'-msg'); if(!ta) return; const upd=()=>{const l=shareLinks(ta.value,k==='fam'?INVITE_URL:null); $(k+'-tg').href=l.tg; $(k+'-wa').href=l.wa;}; ta.addEventListener('input',upd); upd(); });
   const inc=$('inc-score'); inc.addEventListener('change',()=>{ S.incScore=inc.checked; const ta=$('fam-msg'); ta.value=famText(); ta.dispatchEvent(new Event('input')); });
   resEl.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',()=>{
     const ta=$(b.dataset.copy), orig=t.copy;
