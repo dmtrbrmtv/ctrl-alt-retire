@@ -1,5 +1,21 @@
 <!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Ctrl+Alt+Retire</title>
+<meta name="description" content="Пиксельный кликер про айтишника, который копит на раннюю пенсию. Работай, расти в грейдах и не выгори раньше, чем накопишь.">
+<meta name="theme-color" content="#15122b">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ctrlaltretire.com/">
+<meta property="og:site_name" content="Ctrl+Alt+Retire">
+<meta property="og:title" content="Ctrl+Alt+Retire">
+<meta property="og:description" content="Пиксельный кликер про айтишника, который копит на раннюю пенсию. Работай, расти в грейдах и не выгори раньше, чем накопишь.">
+<meta property="og:image" content="https://ctrlaltretire.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Пиксельный разработчик за столом с двумя мониторами в ночном опенспейсе">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap">
@@ -14,14 +30,17 @@
   color-scheme:dark;
 }
 html,body{background:var(--bg);color:var(--fg)}
+html{scrollbar-gutter:stable}
 body{font-family:var(--body);font-size:16px;line-height:1.35;padding-inline:16px;padding-block:16px 28px}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 button{font-family:inherit;color:inherit;cursor:pointer}
 button:focus-visible,#stage:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
+.wrap{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;align-items:start}
 @media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}}
-header.top{max-width:1180px;margin:0 auto 14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+/* Keep the hero clickable while scrolling the shop on wide screens */
+@media (min-width:861px) and (min-height:640px){.col.play{position:sticky;top:16px}}
+header.top{max-width:1320px;margin:0 auto 14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
 h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-spacing:.02em;color:var(--amber);text-shadow:3px 3px 0 #000}
 .tools{display:flex;gap:8px}
 .tbtn{background:var(--panel);border:2px solid var(--line);padding:6px 10px;font-size:14px}
@@ -32,6 +51,7 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 .stat{background:var(--panel);border:2px solid var(--line);padding:8px 10px;min-width:0}
 .stat .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .stat .v{font-family:var(--display);font-size:13px;margin-top:6px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat .sub{font-size:12px;color:var(--energy);margin-top:4px;white-space:nowrap}
 .v.money{color:var(--money)}
 #stageWrap{position:relative;border:3px solid #000;box-shadow:0 0 0 2px var(--line),6px 6px 0 #000;background:#000;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 #stage{display:block;width:100%;height:auto;aspect-ratio:192/120;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;max-width:100%}
@@ -39,6 +59,7 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 .tapHint{position:absolute;left:8px;bottom:8px;font-family:var(--display);font-size:9px;color:var(--fg);background:rgba(0,0,0,.55);padding:6px 8px;pointer-events:none}
 .float{position:absolute;font-family:var(--display);font-size:11px;color:var(--money);text-shadow:2px 2px 0 #000;pointer-events:none;animation:up .9s ease-out forwards;white-space:nowrap}
 .float.xp{color:var(--xp);font-size:9px}
+.float.tired{color:var(--energy);font-size:9px}
 @keyframes up{to{transform:translateY(-46px);opacity:0}}
 .bars{display:flex;flex-direction:column;gap:10px;background:var(--panel);border:2px solid var(--line);padding:10px 12px}
 .barRow{display:grid;grid-template-columns:88px minmax(0,1fr) auto;gap:10px;align-items:center}
@@ -52,14 +73,16 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 #retire:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
 @keyframes pulse{50%{filter:brightness(1.25)}}
 .panel{background:var(--panel);border:2px solid var(--line);min-width:0}
-.tabs{display:flex;border-bottom:2px solid var(--line);overflow-x:auto}
-.tab{flex:1;background:none;border:0;border-right:2px solid var(--line);padding:10px 6px;font-size:14px;color:var(--muted);white-space:nowrap}
-.tab:last-child{border-right:0}
-.tab[aria-selected="true"]{background:var(--panel2);color:var(--amber)}
-.tabNote{padding:8px 12px 0;font-size:13px;color:var(--muted)}
-#shop{display:flex;flex-direction:column;gap:8px;padding:10px;max-height:460px;overflow-y:auto}
-.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--panel2);border:2px solid transparent;padding:8px 10px}
-.item.owned{opacity:.6}
+/* Shop: all four sections at once, two columns when the panel is wide enough */
+#shop{container-type:inline-size}
+.secs{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:12px}
+@container (min-width:600px){.secs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sec{display:flex;flex-direction:column;gap:6px;min-width:0}
+.sec h3{font-family:var(--display);font-size:10px;color:var(--amber);margin:0;letter-spacing:.04em}
+.sec .note{font-size:13px;color:var(--muted);margin:0 0 2px}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--panel2);border:2px solid transparent;padding:7px 10px}
+.item.owned{opacity:.6;padding-block:5px}
+.item.owned .d{display:none}
 .item .n{font-weight:600;font-size:16px}
 .item .d{font-size:13px;color:var(--muted);margin-top:2px}
 .item .u{font-size:12px;color:var(--warn);margin-top:3px}
@@ -68,7 +91,7 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 .buy.on{background:var(--money);color:#10261a}
 .buy:not(:disabled):active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
 .slackHead{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:2px solid var(--line);font-size:14px;color:var(--muted)}
-#slack{list-style:none;margin:0;padding:8px 12px;display:flex;flex-direction:column;gap:5px;height:190px;overflow-y:auto;font-size:14px}
+#slack{list-style:none;margin:0;padding:8px 12px;display:flex;flex-direction:column;gap:5px;height:150px;overflow-y:auto;font-size:14px}
 #slack li{min-width:0;overflow-wrap:anywhere}
 #slack .who{color:var(--xp)}
 #slack .sys{color:var(--warn)}
@@ -85,7 +108,7 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 .choice{text-align:left;background:var(--panel2);border:2px solid var(--line);padding:10px 12px;font-size:15px}
 .choice:hover{border-color:var(--amber)}
 .choice.primary{background:var(--amber);color:#2b1700;border-color:#000;font-weight:600}
-.foot{max-width:1180px;margin:14px auto 0;font-size:13px;color:var(--muted)}
+.foot{max-width:1320px;margin:14px auto 0;font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.float{animation-duration:.01s}#retire{animation:none}}
 </style>
 
@@ -98,7 +121,7 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 </header>
 
 <div class="wrap">
-  <div class="col">
+  <div class="col play">
     <div class="hud">
       <div class="stat"><div class="k">Возраст</div><div class="v" id="hAge">22.0</div></div>
       <div class="stat"><div class="k">Грейд</div><div class="v" id="hGrade">Intern</div></div>
@@ -106,7 +129,7 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
       <div class="stat"><div class="k">ETF</div><div class="v money" id="hEtf">$0</div></div>
       <div class="stat"><div class="k">Зарплата/год</div><div class="v" id="hInc">$0</div></div>
       <div class="stat"><div class="k">Расходы/год</div><div class="v" id="hExp">$0</div></div>
-      <div class="stat"><div class="k">С клика</div><div class="v" id="hClick">$0</div></div>
+      <div class="stat"><div class="k">С клика</div><div class="v" id="hClick">$0</div><div class="sub" id="hClickE">−0.8 энергии</div></div>
       <div class="stat"><div class="k">Поколение</div><div class="v" id="hGen">1</div></div>
     </div>
 
@@ -126,22 +149,13 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 
   <div class="col">
     <div class="panel">
-      <div class="tabs" role="tablist">
-        <button class="tab" data-tab="e" aria-selected="true">Энергия</button>
-        <button class="tab" data-tab="w" aria-selected="false">Работа</button>
-        <button class="tab" data-tab="m" aria-selected="false">Деньги</button>
-        <button class="tab" data-tab="l" aria-selected="false">Жизнь</button>
-      </div>
-      <div class="tabNote" id="tabNote"></div>
-      <div id="shop"></div>
-    </div>
-    <div class="panel">
       <div class="slackHead"><span># general</span><span id="unread">Slack</span></div>
       <ul id="slack"></ul>
     </div>
+    <div class="panel" id="shop"></div>
   </div>
 </div>
-<p class="foot">Цель FIRE = 25 годовых расходов (правило 4%). Год жизни идёт 25 секунд. Если энергия упадёт до нуля, герой уснёт за клавиатурой. Прогресс сохраняется в этом браузере.</p>
+<p class="foot">Цель FIRE = 25 годовых расходов (правило 4%). Год жизни идёт 25 секунд. Каждый клик стоит энергии, а если она упадёт до нуля, герой уснёт за клавиатурой. Прогресс сохраняется в этом браузере.</p>
 
 <div id="modal" hidden><div class="box" role="dialog" aria-modal="true"><h2 id="mTitle"></h2><div id="mBody"></div><div class="choices" id="mChoices"></div></div></div>
 
@@ -176,19 +190,24 @@ const ITEMS=[
  {id:'invest',tab:'m',t:'a',name:'Вложить весь кэш в ETF',desc:'Индекс растёт примерно на 7% в год. Сложный процент сделает остальное.',label:'Вложить',ok:()=>S.cash>=50,buy(){S.etf+=S.cash;log('sys',`Вложил ${fmt(S.cash)} в ETF.`);S.cash=0;}},
  {id:'sell',tab:'m',t:'a',name:'Продать 25% ETF',desc:'Если не хватает кэша на покупки.',label:'Продать',ok:()=>S.etf>=50,buy(){const v=S.etf*.25;S.etf-=v;S.cash+=v;}},
  {id:'auto',tab:'m',t:'t',name:'Автоинвест',desc:'Половина свободных денег и денег с кликов сама уходит в ETF.'},
- {id:'pet',tab:'m',t:'l',name:'Пет-проект',desc:()=>S.pet>=5?'Пет-проект стал маленьким бизнесом.':`Уровень ${S.pet}/5. Даёт ${fmt(petInc(S.pet+1))}/год, но +0.15 к усталости за уровень.`,price:()=>1500*Math.pow(3,S.pet),ok:()=>S.pet<5,buy(){S.pet++;log('good',`Пет-проект: уровень ${S.pet}.`);}},
+ {id:'pet',tab:'m',t:'l',name:'Пет-проект',desc:()=>S.pet>=5?'Пет-проект стал маленьким бизнесом.':`Уровень ${S.pet}/5. Даёт ${fmt(petInc(S.pet+1))}/год, но +0.08 к усталости за уровень.`,price:()=>1500*Math.pow(3,S.pet),ok:()=>S.pet<5,buy(){S.pet++;log('good',`Пет-проект: уровень ${S.pet}.`);}},
  {id:'flat',tab:'l',t:'p',name:'Квартира получше',desc:'Усталость −10%. Наконец-то не слышно соседей.',price:4000,upkeep:9000,drain:.9},
  {id:'watch',tab:'l',t:'p',name:'Дорогие часы',desc:'Усталость −3%. Зато грейд видно издалека.',price:12000,upkeep:500,drain:.97},
  {id:'car',tab:'l',t:'p',name:'Машина',desc:'Усталость −6%. Пробки съедают часть эффекта.',price:15000,upkeep:6000,drain:.94},
  {id:'bali',tab:'l',t:'p',name:'Зимовать на Бали',desc:'Усталость −12%. Работаешь из коворкинга у океана.',price:3000,upkeep:14000,drain:.88},
  {id:'penthouse',tab:'l',t:'p',name:'Пентхаус',desc:'Усталость −12%. Соседи — фаундеры.',price:90000,upkeep:36000,drain:.88,req:'flat'}
 ];
-const TAB_NOTE={e:'Энергия падает быстрее с каждым грейдом и с возрастом. Кликами её можно поддерживать.',w:'Больше денег и опыта с каждого клика.',m:'Деньги, которые работают, пока работаешь ты.',l:'Каждые $1k расходов в год добавляют $25k к цели FIRE.'};
+const SECTIONS=[
+ {k:'e',t:'Энергия',note:'Тратится на каждый клик и понемногу сама. С грейдом и возрастом быстрее.'},
+ {k:'w',t:'Работа',note:'Больше денег и опыта с каждого клика.'},
+ {k:'m',t:'Деньги',note:'Деньги, которые работают, пока работаешь ты.'},
+ {k:'l',t:'Жизнь',note:'Каждые $1k расходов в год добавляют $25k к цели FIRE.'}
+];
 const PINGS=['@olga_pm: есть 5 минут?','@olga_pm: быстрый вопрос','@devops_ivan: кто трогал прод?','@hr_masha: заполните, пожалуйста, опрос вовлечённости','@qa_lena: у меня воспроизводится, а у тебя?','@olga_pm: а можно ещё одну маленькую фичу?','@team: кто на обед?','@manager: давай синкнемся','@designer_kate: я чуть-чуть поправила макет (весь)','@jira_bot: тебе назначено 7 задач','@ceo: мы как семья','@recruiter_bot: hi! open to new opportunities?','@olga_pm: дедлайн был вчера','@devops_ivan: деплой в пятницу, что может пойти не так','@manager: перенесём 1:1 ещё раз','@intern_petya: а где у нас документация?','@qa_lena: в проде баг, но это фича','@olga_pm: стендап через 2 минуты','@security: смените пароль, это 14-й раз'];
 const PINGS_LEAD=['@hr: у тебя 4 собеседования завтра','@board: стратегия на 5 лет нужна к понедельнику','@finance: срежьте бюджет на 20%','@ceo: что с roadmap?','@manager: тебе ещё одна команда, справишься же'];
 const SAVE='car_save_v1', LEG='car_legacy_v1';
 
-let S, sound=true, tab='e', modalOpen=false, ac=null, lastEvent='';
+let S, sound=true, modalOpen=false, ac=null, lastEvent='';
 const $=id=>document.getElementById(id);
 const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
 function legacy(){return store.get(LEG)||{gen:1,cash:0,best:null};}
@@ -208,8 +227,12 @@ function maxE(){return Math.max(35,100*(1-Math.max(0,S.age-30)*.011*(has('gym')?
 function clickMult(){return prod('click');}
 function xpMult(){return prod('xp')*(1+.15*(S.gen-1))*(S.buffs.crunch?2:1);}
 function regen(){return owned().reduce((a,i)=>a+(i.regen||0),0);}
-function drain(){let d=.9*Math.pow(1.3,S.grade)*(1+Math.max(0,S.age-40)*.025)*prod('drain');if(S.freelance)d*=1.25;if(S.buffs.crunch)d*=2.5;if(S.buffs.crash)d*=1.8;return d+S.pet*.15;}
-function clickGain(){return S.age<S.unemployedUntil?0:baseSalary()/YEAR*.12*clickMult()*(S.buffs.crunch?2:1);}
+const ageTire=()=>1+Math.max(0,S.age-40)*.025;
+// Passive fatigue: the hero slowly tires just by going to work
+function drain(){let d=.4*Math.pow(1.3,S.grade)*ageTire()*prod('drain');if(S.freelance)d*=1.25;if(S.buffs.crunch)d*=2.5;if(S.buffs.crash)d*=1.8;return d+S.pet*.08;}
+// Active work: each click converts energy into money and XP
+function clickCost(){let c=.8*ageTire()*prod('drain');if(S.buffs.crunch)c*=1.5;if(S.buffs.crash)c*=1.5;return c;}
+function clickGain(){return S.age<S.unemployedUntil?0:baseSalary()/YEAR*.2*clickMult()*(S.buffs.crunch?2:1);}
 function need(){return GR[S.grade].xp;}
 function addE(v){S.energy=Math.min(maxE(),S.energy+v);}
 function fmt(n){const s=n<0?'−':'';n=Math.abs(n);if(n<1000)return s+'$'+Math.round(n);if(n<1e6)return s+'$'+(n/1e3).toFixed(n<1e4?1:0)+'k';return s+'$'+(n/1e6).toFixed(2)+'M';}
@@ -231,19 +254,25 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 let codeLines=[];
 function newLine(){return[Math.floor(Math.random()*4)*2,3+Math.floor(Math.random()*13),Math.floor(Math.random()*4)];}
 for(let m=0;m<3;m++){codeLines[m]=[];for(let i=0;i<4;i++)codeLines[m].push(newLine());}
-let typing=0;
+let typing=0, tiredLogT=-Infinity;
 function work(ev){
   if(!S.started||S.over||modalOpen||S.paused)return;
-  const g=clickGain();
-  if(S.auto){S.cash+=g*.5;S.etf+=g*.5;}else S.cash+=g;
-  S.xp+=.6*xpMult();addE(.9);S.clicks++;typing=1;
-  const m=Math.floor(Math.random()*monCount());codeLines[m].shift();codeLines[m].push(newLine());
-  blip(520+Math.random()*380,.04);
   const r=$('stageWrap').getBoundingClientRect();
   let x=r.width*.45,y=r.height*.35;
   if(ev&&ev.clientX!=null&&ev.clientX>0){x=ev.clientX-r.left;y=ev.clientY-r.top;}
+  // Clicking can't knock the hero out; it just stops working when there's nothing left
+  const cost=clickCost();
+  if(S.energy-cost<10){floatTxt('нет сил',x,y,'tired');blip(160,.08,'triangle',.04);
+    if(performance.now()-tiredLogT>15000){tiredLogT=performance.now();log('bad','Сил работать нет. Выпей кофе, поспи или просто подожди зарплату.');}
+    return;}
+  S.energy-=cost;
+  const g=clickGain();
+  if(S.auto){S.cash+=g*.5;S.etf+=g*.5;}else S.cash+=g;
+  S.xp+=xpMult();S.clicks++;typing=1;
+  const m=Math.floor(Math.random()*monCount());codeLines[m].shift();codeLines[m].push(newLine());
+  blip(520+Math.random()*380,.04);
   floatTxt(g>0?'+'+fmt(g):'резюме…',x,y,'');
-  if(S.clicks%3===0)floatTxt('+'+(1.8*xpMult()).toFixed(1)+' XP',x+18,y+14,'xp');
+  if(S.clicks%3===0)floatTxt('+'+(3*xpMult()).toFixed(1)+' XP',x+18,y+14,'xp');
   $('tapHint').hidden=true;
 }
 function floatTxt(t,x,y,cls){const d=document.createElement('div');d.className='float '+cls;d.textContent=t;d.style.left=(x-20+Math.random()*16)+'px';d.style.top=(y-10)+'px';$('stageWrap').append(d);setTimeout(()=>d.remove(),950);}
@@ -365,7 +394,7 @@ function renderHUD(){
   $('hEtf').textContent=fmt(S.etf);
   const sal=salary();$('hInc').textContent=S.age<S.unemployedUntil?'поиск…':fmt(sal+petInc(S.pet));
   $('hExp').textContent=fmt(expenses());
-  $('hClick').textContent=fmt(clickGain());
+  $('hClick').textContent=fmt(clickGain());$('hClickE').textContent=`−${clickCost().toFixed(1)} энергии`;
   $('hGen').textContent=S.gen;
   const me=maxE();$('eBar').style.width=(S.energy)+'%';$('eCap').style.width=(100-me)+'%';
   const net=regen()-drain();
@@ -375,27 +404,44 @@ function renderHUD(){
   const f=fire(),w=nw();$('fBar').style.width=Math.max(0,Math.min(1,w/f))*100+'%';$('fNum').textContent=`${fmt(w)} / ${fmt(f)}`;
   $('retire').hidden=!(S.started&&!S.over&&w>=f);
 }
-let shopSig='';
+// The shop DOM is rebuilt only when the set of visible items changes; every tick just patches text and button state in place
+let shopStruct='', shopRows={};
+const setText=(el,t)=>{if(el.textContent!==t)el.textContent=t;};
 function renderShop(force){
-  const list=ITEMS.filter(i=>i.tab===tab&&(!i.req||has(i.req)));
-  const sig=tab+'|'+list.map(i=>{const p=priceOf(i);return i.id+(has(i.id)?1:0)+(S[i.id]?1:0)+(canBuy(i)?1:0)+Math.round(p)+(typeof i.desc==='function'?i.desc():'');}).join(',');
-  if(!force&&sig===shopSig)return;shopSig=sig;
-  $('tabNote').textContent=TAB_NOTE[tab];
-  const box=$('shop');box.innerHTML='';
-  for(const it of list){
-    const row=document.createElement('div');row.className='item'+(it.t==='p'&&has(it.id)?' owned':'');
-    const desc=typeof it.desc==='function'?it.desc():it.desc;
-    const p=priceOf(it);
-    let u='';if(it.upkeep)u=`+${fmt(it.upkeep)}/год к расходам · +${fmt(it.upkeep*25)} к цели FIRE`;
-    row.innerHTML=`<div style="min-width:0"><div class="n"></div><div class="d"></div>${u?'<div class="u"></div>':''}</div>`;
-    row.querySelector('.n').textContent=it.name;row.querySelector('.d').textContent=desc;if(u)row.querySelector('.u').textContent=u;
-    const b=document.createElement('button');b.className='buy';b.dataset.id=it.id;
-    if(it.t==='p'){b.textContent=has(it.id)?'ЕСТЬ':(p?fmt(p):'FREE');b.disabled=has(it.id)||!canBuy(it);}
-    else if(it.t==='t'){b.textContent=S[it.id]?'ВКЛ':'ВЫКЛ';if(S[it.id])b.classList.add('on');}
-    else if(it.t==='a'){b.textContent=it.label.toUpperCase();b.disabled=!canBuy(it);}
-    else{b.textContent=(it.ok&&!it.ok())?'—':fmt(p);b.disabled=!canBuy(it);}
-    row.append(b);box.append(row);
+  const vis=ITEMS.filter(i=>!i.req||has(i.req));
+  const struct=vis.map(i=>i.id).join(',');
+  if(force||struct!==shopStruct){shopStruct=struct;buildShop(vis);}
+  for(const it of vis)updateRow(it);
+}
+function buildShop(vis){
+  const box=$('shop');box.innerHTML='';shopRows={};
+  const secs=document.createElement('div');secs.className='secs';
+  for(const s of SECTIONS){
+    const sec=document.createElement('section');sec.className='sec';
+    sec.innerHTML='<h3></h3><p class="note"></p>';sec.querySelector('h3').textContent=s.t;sec.querySelector('.note').textContent=s.note;
+    for(const it of vis.filter(i=>i.tab===s.k)){
+      const row=document.createElement('div');row.className='item';
+      const u=it.upkeep?`+${fmt(it.upkeep)}/год к расходам · +${fmt(it.upkeep*25)} к цели FIRE`:'';
+      row.innerHTML=`<div style="min-width:0"><div class="n"></div><div class="d"></div>${u?'<div class="u"></div>':''}</div>`;
+      row.querySelector('.n').textContent=it.name;if(u)row.querySelector('.u').textContent=u;
+      const b=document.createElement('button');b.className='buy';b.dataset.id=it.id;
+      row.append(b);sec.append(row);
+      shopRows[it.id]={row,d:row.querySelector('.d'),b};
+    }
+    secs.append(sec);
   }
+  box.append(secs);
+}
+function updateRow(it){
+  const r=shopRows[it.id];if(!r)return;const b=r.b,p=priceOf(it);
+  r.row.classList.toggle('owned',it.t==='p'&&has(it.id));
+  setText(r.d,typeof it.desc==='function'?it.desc():it.desc);
+  let t,dis=false;
+  if(it.t==='p'){t=has(it.id)?'ЕСТЬ':(p?fmt(p):'FREE');dis=has(it.id)||!canBuy(it);}
+  else if(it.t==='t'){t=S[it.id]?'ВКЛ':'ВЫКЛ';}
+  else if(it.t==='a'){t=it.label.toUpperCase();dis=!canBuy(it);}
+  else{t=(it.ok&&!it.ok())?'—':fmt(p);dis=!canBuy(it);}
+  setText(b,t);b.disabled=dis;b.classList.toggle('on',it.t==='t'&&!!S[it.id]);
 }
 function priceOf(i){return typeof i.price==='function'?i.price():(i.price||0);}
 function canBuy(i){if(!S.started||S.over)return false;if(i.t==='t')return true;if(i.t==='p'&&has(i.id))return false;if(i.ok&&!i.ok())return false;return S.cash>=priceOf(i);}
@@ -489,7 +535,7 @@ function intro(){
   const ch=[];
   if(saved&&saved.started&&!saved.over)ch.push({l:`Продолжить карьеру (${saved.age.toFixed(1)} лет, ${GR[saved.grade].n})`,primary:true,f(){S=Object.assign(fresh(),saved);S.paused=false;afterLoad();}});
   ch.push({l:L.gen>1?`Начать: поколение ${L.gen}`:'Начать карьеру',primary:!ch.length,f(){S=fresh();S.started=true;afterLoad();log('sys',L.gen>1?`Поколение ${L.gen}. Родители оставили ${fmt(L.cash)} и совет: «не повторяй наших ошибок».`:'Первый день в Synergix. Тебе выдали ноутбук и пропуск.');log('ping','@manager: добро пожаловать! онбординг в Confluence, удачи');}});
-  modal('Ctrl+Alt+Retire',`<p>Тебе 22, и сегодня твой первый день в компании <b>Synergix</b>. Опенспейс, один монитор, кактус на столе. Ты пришёл «на пару лет набраться опыта».</p><p><b>Кликай по герою</b>, чтобы работать: это деньги, опыт и немного бодрости. Энергия падает сама, быстрее с каждым повышением и с возрастом. Упадёт до нуля, и герой уснёт навсегда.</p><p>Цель: накопить <b>25 годовых расходов</b> и уйти на пенсию как можно раньше. Каждая покупка для комфорта отодвигает финиш.</p>${L.best!=null?`<p style="color:var(--muted)">Рекорд семьи: пенсия в ${L.best}.</p>`:''}`,ch);
+  modal('Ctrl+Alt+Retire',`<p>Тебе 22, и сегодня твой первый день в компании <b>Synergix</b>. Опенспейс, один монитор, кактус на столе. Ты пришёл «на пару лет набраться опыта».</p><p>Зарплата капает сама, но медленно. <b>Кликай по герою</b>, чтобы работать в полную силу: каждый клик даёт деньги и опыт, но <b>стоит энергии</b>. Энергия и так понемногу тает, быстрее с каждым повышением и с возрастом. Восстанавливай её сном, кофе и спортом. Упадёт до нуля, и герой уснёт навсегда.</p><p>Цель: накопить <b>25 годовых расходов</b> и уйти на пенсию как можно раньше. Каждая покупка для комфорта отодвигает финиш.</p>${L.best!=null?`<p style="color:var(--muted)">Рекорд семьи: пенсия в ${L.best}.</p>`:''}`,ch);
 }
 function afterLoad(){S.started=true;S.over=false;renderLog();renderShop(true);if(S.clicks>0)$('tapHint').hidden=true;}
 function newGame(){S=fresh();S.started=true;afterLoad();codeLines.forEach(m=>m.forEach((_,i)=>m[i]=newLine()));log('sys',S.gen>1?`Поколение ${S.gen}. Наследство: ${fmt(S.cash-500)}.`:'Новая жизнь. Снова 22, снова Synergix.');}
@@ -497,8 +543,7 @@ function newGame(){S=fresh();S.started=true;afterLoad();codeLines.forEach(m=>m.f
 $('stage').addEventListener('pointerdown',e=>{e.preventDefault();work(e);});
 $('stage').addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();work(null);}});
 document.addEventListener('keydown',e=>{if(e.key===' '&&document.activeElement===document.body&&!e.repeat&&!modalOpen){e.preventDefault();work(null);}});
-$('shop').addEventListener('click',e=>{const b=e.target.closest('.buy');if(!b||b.disabled)return;const it=ITEMS.find(i=>i.id===b.dataset.id);buyItem(it);renderShop(true);renderHUD();});
-document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===b));renderShop(true);}));
+$('shop').addEventListener('click',e=>{const b=e.target.closest('.buy');if(!b||b.disabled)return;const it=ITEMS.find(i=>i.id===b.dataset.id);buyItem(it);renderShop();renderHUD();});
 $('pauseBtn').onclick=()=>{if(!S.started||S.over)return;S.paused=!S.paused;$('pauseBtn').textContent=S.paused?'Продолжить':'Пауза';};
 $('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').textContent='Звук: '+(sound?'вкл':'выкл');};
 $('retire').onclick=()=>{if(nw()<fire())return;modal('Уволиться навсегда?',`<p>Тебе ${S.age.toFixed(1)}. Капитал ${fmt(nw())} при цели ${fmt(fire())}. Ноутбук можно вернуть в IT-отдел.</p>`,[{l:'Да, на пенсию',primary:true,f(){ending('fire');}},{l:'Ещё поработаю',f(){}}]);};
