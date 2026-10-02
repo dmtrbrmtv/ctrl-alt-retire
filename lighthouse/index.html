@@ -317,6 +317,8 @@ ru:{
   share:'Поделиться', saveImg:'Сохранить картинку', imgSaved:'Картинка сохранена',
   sharedFallback:'Картинка скачана, текст скопирован', textCopied:'Текст скопирован',
   imgNote:'На картинке только итог и дата — без ответов на вопросы.',
+  tgNote:'Кнопки Telegram и WhatsApp отправляют только текст. Чтобы приложить картинку, нажми «Поделиться» и выбери мессенджер. Текст при этом копируется: если он не подтянется, вставь его подписью.',
+  sharedCopied:'Текст скопирован — вставь его подписью, если нужно',
   cardSite:'ctrlaltretire.com/lighthouse'
 },
 en:{
@@ -419,6 +421,8 @@ en:{
   share:'Share', saveImg:'Save image', imgSaved:'Image saved',
   sharedFallback:'Image downloaded, text copied', textCopied:'Text copied',
   imgNote:'The image shows only the result and the date — none of your answers.',
+  tgNote:'The Telegram and WhatsApp buttons send text only. To attach the image, tap Share and pick the app. The text is copied too: if it does not come through, paste it as a caption.',
+  sharedCopied:'Text copied — paste it as a caption if needed',
   cardSite:'ctrlaltretire.com/lighthouse'
 }};
 const LEVEL_COLORS=['#6fb7b8','#9cc47a','#f2c14e','#f0904a','#e5636a'];
@@ -775,18 +779,29 @@ async function cardBlob(){
 function downloadBlob(b){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='lighthouse-path.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
 async function copyText(text){try{await navigator.clipboard.writeText(text);return true;}catch(e){return false;}}
 // Native share sheet when available (text, plus the image if allowed); otherwise download the image and copy the text
-async function shareOut(btn,text,withImg){
+// The image is rendered ahead of time: Safari only opens the share sheet right after a tap, so nothing may be awaited in between
+const cardCache={key:null,blob:null,p:null};
+function prepCard(){
+  const c=cur(), key=[c.s,c.df,+c.date,lang,plainFont].join('|');
+  if(cardCache.key===key&&cardCache.p) return cardCache.p;
+  cardCache.key=key; cardCache.blob=null;
+  cardCache.p=cardBlob().then(b=>{ if(cardCache.key===key) cardCache.blob=b; return b; });
+  return cardCache.p;
+}
+function shareOut(btn,text,withImg){
   const t=L(), orig=btn.textContent;
-  const flash=m=>{btn.textContent=m;setTimeout(()=>btn.textContent=orig,2400);};
-  let blob=null; if(withImg){ try{ blob=await cardBlob(); }catch(e){} }
+  const flash=m=>{btn.textContent=m;setTimeout(()=>btn.textContent=orig,2800);};
+  const blob=withImg?cardCache.blob:null;
+  if(withImg&&!blob){ prepCard().then(()=>shareOut(btn,text,withImg)); return; }
+  const copied=copyText(text);
+  const fallback=()=>{ if(blob) downloadBlob(blob); copied.then(ok=>flash(blob?t.sharedFallback:(ok?t.textCopied:t.selected))); };
   if(navigator.share){
     const data={text};
     if(blob){ const f=new File([blob],'lighthouse-path.png',{type:'image/png'}); if(navigator.canShare&&navigator.canShare({files:[f]})) data.files=[f]; }
-    try{ await navigator.share(data); return; }catch(e){ if(e&&e.name==='AbortError') return; }
+    navigator.share(data).then(()=>{ if(data.files) copied.then(ok=>ok&&flash(t.sharedCopied)); },e=>{ if(e&&e.name==='AbortError') return; fallback(); });
+    return;
   }
-  if(blob) downloadBlob(blob);
-  const ok=await copyText(text);
-  flash(blob?t.sharedFallback:(ok?t.textCopied:t.selected));
+  fallback();
 }
 function loadHist(){ try{ const h=JSON.parse(localStorage.getItem('lh-history')||'[]'); return Array.isArray(h)?h.filter(e=>e&&typeof e.s==='number'):[]; }catch(e){ return []; } }
 function saveHist(){ try{ const h=loadHist(); h.push({t:S.doneAt.getTime(),s:score(),df:S.ans[9]}); localStorage.setItem('lh-history',JSON.stringify(h.slice(-30))); }catch(e){} }
@@ -855,7 +870,7 @@ function renderResult(){
     `<label class="check"><input type="checkbox" id="inc-score" ${S.incScore?'checked':''}> ${esc(t.incScore)}</label>`+
     `<textarea id="fam-msg" aria-label="${esc(t.shareTitle)}">${esc(famText())}</textarea>`+
     `<div class="row"><button class="btn primary" type="button" id="fam-share">${esc(t.share)}</button><button class="btn" type="button" data-copy="fam-msg">${esc(t.copy)}</button>`+
-    `<a class="btn" id="fam-tg" target="_blank" rel="noopener">Telegram</a><a class="btn" id="fam-wa" target="_blank" rel="noopener">WhatsApp</a></div></section>`;
+    `<a class="btn" id="fam-tg" target="_blank" rel="noopener">Telegram</a><a class="btn" id="fam-wa" target="_blank" rel="noopener">WhatsApp</a></div><p class="about">${esc(t.tgNote)}</p></section>`;
   h+=`<section class="panel"><h3>${esc(t.inviteTitle)}</h3><p>${esc(t.inviteNote)}</p>`+
     `<textarea id="inv-msg" aria-label="${esc(t.inviteTitle)}">${esc(t.invite(INVITE_URL))}</textarea>`+
     `<div class="row"><button class="btn primary" type="button" id="inv-share">${esc(t.share)}</button><button class="btn" type="button" data-copy="inv-msg">${esc(t.copy)}</button>`+
@@ -863,7 +878,8 @@ function renderResult(){
   h+=`<p class="about">${esc(t.about)}</p>`;
   resEl.innerHTML=h;
   const flash=(b,msg)=>{const o=b.textContent;b.textContent=msg;setTimeout(()=>b.textContent=o,2200);};
-  $('save-img').addEventListener('click',async e=>{const b=e.currentTarget;try{downloadBlob(await cardBlob());flash(b,t.imgSaved);}catch(err){}});
+  setTimeout(prepCard,250);
+  $('save-img').addEventListener('click',async e=>{const b=e.currentTarget;try{downloadBlob(cardCache.blob||await prepCard());flash(b,t.imgSaved);}catch(err){}});
   // The result image goes along only when "Include my result" is checked
   $('fam-share').addEventListener('click',e=>shareOut(e.currentTarget,$('fam-msg').value,S.incScore));
   $('inv-share').addEventListener('click',e=>shareOut(e.currentTarget,$('inv-msg').value,false));
