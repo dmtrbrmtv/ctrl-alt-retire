@@ -149,6 +149,14 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 .toast span{font-size:15px}
 .toast.out{opacity:0;transform:translateY(8px)}
 @keyframes tin{from{transform:translateY(12px);opacity:0}}
+.eta{font-size:13px;color:var(--muted);text-align:right;margin-top:-4px}
+.eta b{color:var(--fg);font-weight:600}
+.eta.ready b{color:var(--money)}
+.chart{display:block;width:100%;height:auto;margin:6px 0 4px;background:#15122b;border:2px solid #000}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.legend i{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:4px}
+.moments{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px 12px;font-size:13px;color:var(--muted)}
+.moments b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
 .foot{max-width:1320px;margin:14px auto 0;font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.float{animation-duration:.01s}#retire,.item.hl{animation:none}.toast{animation:none}}
 </style>
@@ -198,6 +206,7 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
       <div class="barRow"><span class="lbl" data-en="XP">Опыт</span><div class="bar"><i id="xBar" style="--c:var(--xp)"></i></div><span class="num" id="xNum">0%</span></div>
       <div class="barRow"><span class="lbl" data-en="Burnout">Выгорание</span><div class="bar"><i id="bBar" style="--c:var(--warn)"></i></div><span class="num" id="bNum">0%</span></div>
       <div class="barRow"><span class="lbl" data-en="FIRE goal">Цель FIRE</span><div class="bar"><i id="fBar" style="--c:var(--money)"></i></div><span class="num" id="fNum">$0</span></div>
+      <div class="eta" id="eta"></div>
     </div>
     <button id="retire" hidden data-en="QUIT FOREVER">УВОЛИТЬСЯ НАВСЕГДА</button>
   </div>
@@ -228,7 +237,7 @@ if(LANG==='en'){
   document.querySelectorAll('[data-en-aria]').forEach(el=>el.setAttribute('aria-label',el.dataset.enAria));
 }
 
-const YEAR=25, END_AGE=67, VERSION='2026-10-02b';
+const YEAR=25, END_AGE=67, VERSION='2026-10-02c';
 const GR=[
  {n:'Intern',sal:13000,xp:50,shirt:'#5b8cff'},
  {n:'Junior',sal:24000,xp:130,shirt:'#4fc27a'},
@@ -240,6 +249,10 @@ const GR=[
  {n:'CTO',sal:220000,xp:Infinity,shirt:'#1b1b22'}
 ];
 const BARISTA_PAY=21000;
+// Balance knobs (tuned with local bot simulations)
+// click: share of yearly salary/25 per click; xpClick: XP per click; expGrade: base expenses growth per grade;
+// baristaExpGrade: the barista's base expenses are capped at this grade's level (a simpler life)
+const BAL={click:.12,clickCost:1,baseExp:12000,expGrade:.4,xpClick:.5,baristaExpGrade:1};
 const ITEMS=[
  {id:'coffee',tab:'e',t:'c',name:T('Кофе','Coffee'),desc:()=>T(`+${Math.round(22*S.coffeeTol)} энергии. С каждой чашкой эффект слабее.`,`+${Math.round(22*S.coffeeTol)} energy. Each cup works a little less.`),price:()=>20*(1+S.grade*0.6),buy(){addE(22*S.coffeeTol);S.coffeeTol*=0.85;S.coffeeShow=10;S.coffees++;}},
  {id:'drink',tab:'e',t:'c',name:T('Энергетик','Energy drink'),desc:()=>T('+45 энергии сразу. Через 10 с краш: −15 и усталость ×1.8.','+45 energy now. Crash in 10 s: −15 and fatigue ×1.8.'),price:()=>60*(1+S.grade*0.6),buy(){addE(45);S.buffs.drink=10;S.coffees++;}},
@@ -272,11 +285,11 @@ const ITEMS=[
  {id:'sellcrypto',tab:'m',t:'a',name:T('Продать всю крипту','Sell all crypto'),desc:T('Зафиксировать прибыль или убыток.','Lock in the gain or the loss.'),label:T('Продать','Sell'),ok:()=>S.crypto>=1,buy(){S.cash+=S.crypto;S.crypto=0;S.cryptoIn=0;}},
  {id:'auto',tab:'m',t:'t',name:T('Автоинвест','Auto-invest'),desc:T('Половина свободных денег и денег с кликов сама уходит в ETF.','Half of your spare money and click income goes into ETFs automatically.')},
  {id:'pet',tab:'m',t:'l',name:T('Пет-проект','Side project'),desc:()=>S.pet>=5?T('Пет-проект стал маленьким бизнесом.','Your side project became a small business.'):T(`Уровень ${S.pet}/5. Даёт ${fmt(petInc(S.pet+1))}/год, но +0.08 к усталости за уровень.`,`Level ${S.pet}/5. Brings ${fmt(petInc(S.pet+1))}/yr, but +0.08 fatigue per level.`),price:()=>1500*Math.pow(3,S.pet),ok:()=>S.pet<5,buy(){S.pet++;log('good',T(`Пет-проект: уровень ${S.pet}.`,`Side project: level ${S.pet}.`));}},
- {id:'flat',tab:'l',t:'p',name:T('Квартира получше','A better flat'),desc:T('Усталость −10%. Наконец-то не слышно соседей.','Fatigue −10%. Finally you cannot hear the neighbors.'),price:4000,upkeep:9000,drain:.9},
- {id:'watch',tab:'l',t:'p',name:T('Дорогие часы','Luxury watch'),desc:T('Усталость −3%. Зато грейд видно издалека.','Fatigue −3%. But everyone can see your grade.'),price:12000,upkeep:500,drain:.97},
- {id:'car',tab:'l',t:'p',name:T('Машина','Car'),desc:T('Усталость −6%. Пробки съедают часть эффекта.','Fatigue −6%. Traffic eats part of the effect.'),price:15000,upkeep:6000,drain:.94},
- {id:'bali',tab:'l',t:'p',name:T('Зимовать на Бали','Winters in Bali'),desc:T('Усталость −12%. Работаешь из коворкинга у океана.','Fatigue −12%. You work from a coworking space by the ocean.'),price:3000,upkeep:14000,drain:.88},
- {id:'penthouse',tab:'l',t:'p',name:T('Пентхаус','Penthouse'),desc:T('Усталость −12%. Соседи — фаундеры.','Fatigue −12%. Your neighbors are founders.'),price:90000,upkeep:36000,drain:.88,req:'flat'}
+ {id:'flat',tab:'l',t:'p',name:T('Квартира получше','A better flat'),desc:T('Усталость −10%. Наконец-то не слышно соседей.','Fatigue −10%. Finally you cannot hear the neighbors.'),price:4000,upkeep:18000,drain:.9},
+ {id:'watch',tab:'l',t:'p',name:T('Дорогие часы','Luxury watch'),desc:T('Усталость −3%. Зато грейд видно издалека.','Fatigue −3%. But everyone can see your grade.'),price:12000,upkeep:1000,drain:.97},
+ {id:'car',tab:'l',t:'p',name:T('Машина','Car'),desc:T('Усталость −6%. Пробки съедают часть эффекта.','Fatigue −6%. Traffic eats part of the effect.'),price:15000,upkeep:12000,drain:.94},
+ {id:'bali',tab:'l',t:'p',name:T('Зимовать на Бали','Winters in Bali'),desc:T('Усталость −12%. Работаешь из коворкинга у океана.','Fatigue −12%. You work from a coworking space by the ocean.'),price:3000,upkeep:28000,drain:.88},
+ {id:'penthouse',tab:'l',t:'p',name:T('Пентхаус','Penthouse'),desc:T('Усталость −12%. Соседи — фаундеры.','Fatigue −12%. Your neighbors are founders.'),price:90000,upkeep:72000,drain:.88,req:'flat'}
 ];
 const SECTIONS=[
  {k:'e',t:T('Энергия','Energy'),note:T('Тратится на каждый клик и понемногу сама. С грейдом и возрастом быстрее.','Spent on every click and slowly by itself. Faster with each grade and with age.')},
@@ -362,6 +375,7 @@ const REACT={
 };
 const SAVE='car_save_v1', LEG='car_legacy_v1', META_K='car_meta_v1';
 
+let SIM=false; // local balance simulations: no sounds, popups or analytics
 let S, modalOpen=false, collOpen=false, ac=null, speed=1;
 const $=id=>document.getElementById(id);
 const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
@@ -371,7 +385,7 @@ function legacy(){return store.get(LEG)||{gen:1,cash:0,best:null};}
 const meta=Object.assign({endings:{},ach:{},tut:false},store.get(META_K)||{});
 const saveMeta=()=>store.set(META_K,meta);
 
-function fresh(){const L=legacy();return{gen:L.gen,age:22,cash:500+L.cash,etf:0,bonds:0,crypto:0,cryptoIn:0,yearInv:0,grade:0,xp:0,energy:100,burn:0,burnHit:false,salaryMult:1,owned:{},pet:0,freelance:false,hard:false,smile:false,weekend:false,auto:false,calm:false,declined:0,coffeeTol:1,coffeeShow:0,coffees:0,vacations:0,buffs:{},startup:null,unicorn:false,startupDone:false,unemployedUntil:0,vacReady:22,eventT:30,pingT:3,clicks:0,lastEvent:'',trait:null,married:false,kids:0,mortgage:false,marathon:false,barista:false,done:{},over:false,started:false,paused:false,log:[]};}
+function fresh(){const L=legacy();return{gen:L.gen,age:22,cash:500+L.cash,etf:0,bonds:0,crypto:0,cryptoIn:0,yearInv:0,grade:0,xp:0,energy:100,burn:0,burnHit:false,salaryMult:1,owned:{},pet:0,freelance:false,hard:false,smile:false,weekend:false,auto:false,calm:false,declined:0,coffeeTol:1,coffeeShow:0,coffees:0,vacations:0,buffs:{},startup:null,unicorn:false,startupDone:false,unemployedUntil:0,vacReady:22,eventT:30,pingT:3,clicks:0,lastEvent:'',hist:[],marks:[],clickAcc:0,clickRate:0,trait:null,married:false,kids:0,mortgage:false,marathon:false,barista:false,done:{},over:false,started:false,paused:false,log:[]};}
 
 /* ---------- randomness ---------- */
 const rnd=Math.random;
@@ -389,7 +403,7 @@ const petInc=l=>l?1500*(Math.pow(2,l)-1):0;
 function gradeName(){return S.barista?T('Бариста','Barista'):GR[S.grade].n;}
 function baseSalary(){let s=(S.barista?BARISTA_PAY:GR[S.grade].sal)*S.salaryMult;if(S.freelance||S.weekend)s*=1.3;if(S.startup)s*=.6;if(trait('prodigy'))s*=.9;if(trait('networker'))s*=1.15;return s;}
 function salary(){if(S.age<S.unemployedUntil)return 0;let s=baseSalary();if(S.buffs.crunch)s*=2;return s;}
-function baseExp(g=S.grade){return 12000*(1+.25*g)*(trait('frugal')?.85:1);}
+function baseExp(g=S.barista&&BAL.baristaExpGrade>=0?Math.min(S.grade,BAL.baristaExpGrade):S.grade){return BAL.baseExp*(1+BAL.expGrade*g)*(trait('frugal')?.85:1);}
 function expenses(){return baseExp()+owned().reduce((a,i)=>a+(i.upkeep||0),0)+(S.married?3000:0)+S.kids*8000-(S.mortgage?4000:0);}
 const fire=()=>25*expenses();
 const invested=()=>S.etf+S.bonds+S.crypto;
@@ -411,10 +425,15 @@ function drain(){
   return d+S.pet*.08;
 }
 // Active work: each click converts energy into money and XP
-function clickCost(){let c=.8*ageTire()*prod('drain');if(trait('workaholic'))c*=.75;if(S.buffs.crunch)c*=1.5;if(S.buffs.crash)c*=1.5;return c;}
-function clickGain(){return S.age<S.unemployedUntil?0:baseSalary()/YEAR*.2*clickMult()*(S.smile?1.25:1)*(S.buffs.crunch?2:1)*burnMult()*(trait('zen')?.85:1);}
+function clickCost(){let c=BAL.clickCost*ageTire()*prod('drain');if(trait('workaholic'))c*=.75;if(S.buffs.crunch)c*=1.5;if(S.buffs.crash)c*=1.5;return c;}
+function clickGain(){return S.age<S.unemployedUntil?0:baseSalary()/YEAR*BAL.click*clickMult()*(S.smile?1.25:1)*(S.buffs.crunch?2:1)*burnMult()*(trait('zen')?.85:1);}
 function need(){return GR[S.grade].xp;}
 function addE(v){S.energy=Math.min(maxE(),S.energy+v);}
+// Key life moments shown on the ending chart
+function mark(label){S.marks.push([+S.age.toFixed(1),label]);if(S.marks.length>40)S.marks.shift();}
+const MARKS={crash:()=>T('Обвал рынка','Market crash'),moon:()=>T('Крипта ×3','Crypto ×3'),rug:()=>T('Биржа рухнула','Exchange bust'),layoff:()=>T('Сокращение','Layoff'),
+ wedding:()=>S.married&&T('Свадьба','Wedding'),kid:i=>i===0&&T('Ребёнок','A kid'),mortgage:()=>S.mortgage&&T('Ипотека','Mortgage'),startup:i=>i===0&&T('Стартап','Startup'),
+ recruiter:i=>i===0&&T('Новая работа','New job'),midlife:i=>i<2&&T('Кризис 40','Midlife crisis'),buycafe:i=>i===0&&T('Своя кофейня','Own café'),blogger:()=>null};
 function earn(g){if(S.auto){S.cash+=g*.5;S.etf+=g*.5;S.yearInv+=g*.5;}else S.cash+=g;}
 function fmt(n){const s=n<0?'−':'';n=Math.abs(n);if(n<1000)return s+'$'+Math.round(n);if(n<1e6)return s+'$'+(n/1e3).toFixed(n<1e4?1:0)+'k';return s+'$'+(n/1e6).toFixed(2)+'M';}
 function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
@@ -423,6 +442,7 @@ function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();r
 // Sends to PostHog on the live site; elsewhere just logs to the console
 let sessClicks=0,sessPlay=0;
 function track(name,props,opts){
+  if(SIM)return;
   const p=Object.assign(S?{age:+S.age.toFixed(1),grade:gradeName(),gen:S.gen}:{},{v:VERSION,lang:LANG,speed},props);
   try{const ph=window.posthog;if(ph&&typeof ph.capture==='function')ph.capture(name,p,opts);else console.debug('[track]',name,p);}catch(e){}
 }
@@ -436,7 +456,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('pagehide',flushSession);
 
 /* ---------- achievements ---------- */
-function toast(head,text){const d=document.createElement('div');d.className='toast';d.innerHTML='<b></b><span></span>';d.firstChild.textContent=head;d.lastChild.textContent=text;$('toasts').append(d);setTimeout(()=>d.classList.add('out'),3400);setTimeout(()=>d.remove(),3900);}
+function toast(head,text){if(SIM)return;const d=document.createElement('div');d.className='toast';d.innerHTML='<b></b><span></span>';d.firstChild.textContent=head;d.lastChild.textContent=text;$('toasts').append(d);setTimeout(()=>d.classList.add('out'),3400);setTimeout(()=>d.remove(),3900);}
 function unlock(id){if(meta.ach[id])return;meta.ach[id]=Date.now();saveMeta();const a=ACH.find(x=>x.id===id);toast(T('★ ДОСТИЖЕНИЕ','★ ACHIEVEMENT'),a.t);jingle([784,988,1175]);track('achievement',{id});}
 function checkAch(){
   if(S.clicks>=1)unlock('hello');if(S.clicks>=1000)unlock('grinder');if(S.declined>=3)unlock('humble');
@@ -447,13 +467,13 @@ function checkAch(){
 
 /* ---------- log ---------- */
 function log(cls,text){S.log.push([cls,text]);if(S.log.length>40)S.log.shift();renderLog();if(cls==='ping'&&Math.random()<.35)showScreen('slack',1500);}
-function renderLog(){const ul=$('slack');ul.innerHTML='';for(const[c,t]of S.log){const li=document.createElement('li');if(c==='ping'){const m=t.indexOf(':');li.innerHTML=`<span class="who"></span>`;li.firstChild.textContent=t.slice(0,m+1);li.append(t.slice(m+1));}else{li.className=c;li.textContent=t;}ul.append(li);}ul.scrollTop=ul.scrollHeight;}
+function renderLog(){if(SIM)return;const ul=$('slack');ul.innerHTML='';for(const[c,t]of S.log){const li=document.createElement('li');if(c==='ping'){const m=t.indexOf(':');li.innerHTML=`<span class="who"></span>`;li.firstChild.textContent=t.slice(0,m+1);li.append(t.slice(m+1));}else{li.className=c;li.textContent=t;}ul.append(li);}ul.scrollTop=ul.scrollHeight;}
 function react(id){const r=REACT[id];if(!r||Math.random()<.35)return;const [ru,en]=pick(r);setTimeout(()=>{if(S&&S.started&&!S.over)log('ping',T(ru,en));},1200+Math.random()*1500);}
 
 /* ---------- sound & music ---------- */
 function ensureAudio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume();}catch(e){}}
 function tone(f,t,d,type,v){const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d+.02);}
-function blip(f=700,d=.05,type='square',v=.035){if(!sound)return;try{ensureAudio();tone(f,ac.currentTime,d,type,v);}catch(e){}}
+function blip(f=700,d=.05,type='square',v=.035){if(!sound||SIM)return;try{ensureAudio();tone(f,ac.currentTime,d,type,v);}catch(e){}}
 function jingle(notes){notes.forEach((f,i)=>setTimeout(()=>blip(f,.12,'square',.04),i*110));}
 // Chiptune loop: a chord progression per season, faster during a crunch, silent when paused or in a menu
 const PROGS=[[[57,60,64],[53,57,60],[48,52,55],[55,59,62]],[[60,64,67],[55,59,62],[57,60,64],[53,57,60]],[[52,55,59],[57,60,64],[50,53,57],[55,59,62]],[[50,53,57],[46,50,53],[48,52,55],[45,48,52]]];
@@ -506,11 +526,11 @@ function work(ev){
     if(performance.now()-tiredLogT>15000){tiredLogT=performance.now();track('too_tired_to_click');log('bad',T('Сил работать нет. Выпей кофе, поспи или просто подожди зарплату.','No strength left. Have a coffee, sleep, or just wait for payday.'));}
     return;}
   S.energy-=cost;
-  const g=clickGain();earn(g);
-  S.xp+=xpMult()*burnMult();S.clicks++;sessClicks++;typeCode();
+  const g=clickGain();earn(g);S.clickAcc+=g;
+  S.xp+=BAL.xpClick*xpMult()*burnMult();S.clicks++;sessClicks++;typeCode();
   blip(520+Math.random()*380,.04);
   floatTxt(g>0?'+'+fmt(g):T('резюме…','résumé…'),x,y,'');
-  if(S.clicks%3===0&&!S.barista)floatTxt('+'+(3*xpMult()*burnMult()).toFixed(1)+' XP',x+18,y+14,'xp');
+  if(S.clicks%3===0&&!S.barista)floatTxt('+'+(3*BAL.xpClick*xpMult()*burnMult()).toFixed(1)+' XP',x+18,y+14,'xp');
   $('tapHint').hidden=true;
 }
 // Steady work: half the money and half the energy per action, twice a second.
@@ -521,10 +541,10 @@ function autoWork(){
   if(calmResting&&er>=.5)calmResting=false;
   if(!calmResting&&(er<.3||S.energy-cost<10))calmResting=true;
   if(calmResting)return;
-  S.energy-=cost;const g=clickGain()*.5;earn(g);S.xp+=xpMult()*burnMult()*.5;typeCode();
+  S.energy-=cost;const g=clickGain()*.5;earn(g);S.clickAcc+=g;S.xp+=BAL.xpClick*xpMult()*burnMult()*.5;typeCode();
   const r=$('stageWrap').getBoundingClientRect();if(g>0&&Math.random()<.5)floatTxt('+'+fmt(g),r.width*(.5+Math.random()*.2),r.height*.45,'calm');
 }
-function floatTxt(t,x,y,cls){const d=document.createElement('div');d.className='float '+cls;d.textContent=t;d.style.left=(x-20+Math.random()*16)+'px';d.style.top=(y-10)+'px';$('stageWrap').append(d);setTimeout(()=>d.remove(),950);}
+function floatTxt(t,x,y,cls){if(SIM)return;const d=document.createElement('div');d.className='float '+cls;d.textContent=t;d.style.left=(x-20+Math.random()*16)+'px';d.style.top=(y-10)+'px';$('stageWrap').append(d);setTimeout(()=>d.remove(),950);}
 function monCount(){return 1+(has('mon2')?1:0)+(has('mon3')?1:0);}
 
 function vacation(){
@@ -544,14 +564,14 @@ function buyItem(it){
 function promo(){
   const nx=GR[S.grade+1];const cur=GR[S.grade];
   modal(T(`Повышение: ${nx.n}`,`Promotion: ${nx.n}`),`<p>${T('Тебя зовут на новую роль. Больше денег, больше созвонов, больше ответственности.','You are offered a new role. More money, more calls, more responsibility.')}</p><div class="stats"><span>${T('Зарплата','Salary')}</span><b>${fmt(cur.sal*S.salaryMult)} → ${fmt(nx.sal*S.salaryMult)}</b><span>${T('Усталость','Fatigue')}</span><b>×1.3</b><span>${T('Базовые расходы','Base expenses')}</span><b>${fmt(baseExp())} → ${fmt(baseExp(S.grade+1))}</b></div><p style="margin-top:10px;color:var(--muted)">${T('Новый уровень — новые привычки. Цель FIRE тоже вырастет.','A new level means new habits. The FIRE goal grows too.')}</p>`,[
-    {l:T('Принять повышение','Accept the promotion'),primary:true,f(){track('promotion',{to:nx.n,accepted:true});S.grade++;S.xp=0;log('good',T(`Ты теперь ${GR[S.grade].n}!`,`You are now ${GR[S.grade].n}!`));jingle([523,659,784,1046]);}},
+    {l:T('Принять повышение','Accept the promotion'),primary:true,f(){track('promotion',{to:nx.n,accepted:true});S.grade++;mark(GR[S.grade].n);S.xp=0;log('good',T(`Ты теперь ${GR[S.grade].n}!`,`You are now ${GR[S.grade].n}!`));jingle([523,659,784,1046]);}},
     {l:T('Отказаться и остаться на месте','Decline and stay where you are'),f(){track('promotion',{to:nx.n,accepted:false});S.xp=need()*.4;S.declined++;log('sys',T('Ты отказался от повышения. Менеджер удивлён.','You declined the promotion. Your manager is surprised.'));}}
   ]);
 }
-function backToIT(){S.barista=false;S.smile=false;S.weekend=false;S.grade=Math.max(0,S.grade-1);S.xp=0;resetCode();track('career_change',{to:'it',grade:GR[S.grade].n});log('good',T(`Снова в IT, теперь ${GR[S.grade].n}. Ноутбук тот же, пароль от VPN — нет.`,`Back in tech as ${GR[S.grade].n}. Same laptop, new VPN password.`));log('ping',T('@olga_pm: о, ты вернулся! есть 5 минут?','@olga_pm: oh, you are back! got 5 minutes?'));}
-function becomeBarista(){S.barista=true;S.burn=0;S.freelance=false;S.hard=false;S.startup=null;track('career_change',{to:'barista'});log('good',T('Ты теперь бариста. Вместо Jira — очередь за капучино.','You are a barista now. A cappuccino queue instead of Jira.'));log('ping',T('@olga_pm: а можно тебе ещё одну маленькую фичу? …ой','@olga_pm: could you take one tiny feature? …oh'));}
+function backToIT(){mark(T('Снова в IT','Back to tech'));S.barista=false;S.smile=false;S.weekend=false;S.grade=Math.max(0,S.grade-1);S.xp=0;resetCode();track('career_change',{to:'it',grade:GR[S.grade].n});log('good',T(`Снова в IT, теперь ${GR[S.grade].n}. Ноутбук тот же, пароль от VPN — нет.`,`Back in tech as ${GR[S.grade].n}. Same laptop, new VPN password.`));log('ping',T('@olga_pm: о, ты вернулся! есть 5 минут?','@olga_pm: oh, you are back! got 5 minutes?'));}
+function becomeBarista(){mark(T('Бариста','Barista'));S.barista=true;S.burn=0;S.freelance=false;S.hard=false;S.startup=null;track('career_change',{to:'barista'});log('good',T('Ты теперь бариста. Вместо Jira — очередь за капучино.','You are a barista now. A cappuccino queue instead of Jira.'));log('ping',T('@olga_pm: а можно тебе ещё одну маленькую фичу? …ой','@olga_pm: could you take one tiny feature? …oh'));}
 function burnoutEvent(){
-  S.burnHit=true;unlock('burnout');track('burnout');
+  S.burnHit=true;unlock('burnout');track('burnout');mark(T('Выгорание','Burnout'));
   modal(T('Ты выгорел','You burned out'),`<p>${S.barista?T('Утром не получилось открыть кофейню. От звука кофемолки дёргается глаз, а латте-арт выходит грустным.','You could not open the café this morning. The grinder makes your eye twitch and the latte art looks sad.'):T('Утром не получилось открыть ноутбук. Буквы в Jira расплываются, а от звука Slack дёргается глаз.','You could not open the laptop this morning. Jira text blurs and the Slack sound makes your eye twitch.')}</p><p style="color:var(--muted)">${T('Выгорание режет доход с клика и опыт до 50%. Пора что-то менять.','Burnout cuts click income and XP by up to 50%. Time to change something.')}</p>`,[
     {l:T('Отпуск за свой счёт: полгода без зарплаты, выгорание 0','Unpaid leave: half a year without pay, burnout reset'),primary:true,f(){S.burn=0;S.unemployedUntil=S.age+.5;S.energy=maxE();log('good',T('Полгода без работы. Ты снова различаешь цвета.','Half a year off. You can see colors again.'));}},
     ...(S.barista?[]:[{l:T(`Уйти в бариста: зарплата ${fmt(BARISTA_PAY)}, усталость втрое меньше, без повышений`,`Become a barista: ${fmt(BARISTA_PAY)} salary, a third of the fatigue, no promotions`),f(){becomeBarista();}}]),
@@ -628,7 +648,7 @@ function triggerEvent(){
   const ws=pool.map(e=>typeof e.w==='function'?e.w():e.w);let r=rnd()*ws.reduce((a,b)=>a+b,0);
   let ev=pool[0];for(let i=0;i<pool.length;i++){r-=ws[i];if(r<=0){ev=pool[i];break;}}
   S.lastEvent=ev.id;if(ev.once)S.done[ev.id]=1;ev.pre&&ev.pre();blip(330,.15,'triangle',.06);showScreen('jira',3000);
-  modal(ev.title,`<p>${esc(typeof ev.text==='function'?ev.text():ev.text)}</p>`,ev.ch.map((c,i)=>({l:c.l,f(){track('event_choice',{event:ev.id,choice:i+1});c.f&&c.f();}})));
+  modal(ev.title,`<p>${esc(typeof ev.text==='function'?ev.text():ev.text)}</p>`,ev.ch.map((c,i)=>({l:c.l,f(){track('event_choice',{event:ev.id,choice:i+1});const was=ev.id==='mortgage'?S.mortgage:null;c.f&&c.f();const m=MARKS[ev.id];const lb=m&&m(i);if(lb&&(ev.id!=='mortgage'||!was))mark(lb);}})));
 }
 
 /* ---------- endings ---------- */
@@ -663,7 +683,28 @@ function ending(kind){
       {l:T('Начать с нуля','Start from scratch'),f(){store.set(LEG,{gen:1,cash:0,best});newGame();track('game_start',{mode:'restart'});}}];
   }
   const found=Object.keys(meta.endings).length;
-  modal(E.t,`${isNew?`<span class="newEnd">${T('НОВАЯ КОНЦОВКА','NEW ENDING')} ${found}/${ENDINGS.length}</span>`:''}<div class="big">${esc(big)}</div><p>${esc(E.x(age))}</p><div class="stats"><span>${T('Лет в профессии','Years worked')}</span><b>${years}</b><span>${T('Грейд','Grade')}</span><b>${esc(gradeName())}</b><span>${T('Капитал','Net worth')}</span><b>${fmt(worth)}</b><span>${T('Цель FIRE','FIRE goal')}</span><b>${fmt(fire())}</b><span>${T('Кликов','Clicks')}</span><b>${S.clicks}</b><span>${T('Поколение','Generation')}</span><b>${S.gen}</b>${best!=null?`<span>${T('Рекорд: пенсия в','Record: retired at')}</span><b>${best}</b>`:''}</div>`,choices);
+  const chart=lifeChart(worth,age);
+  modal(E.t,`${isNew?`<span class="newEnd">${T('НОВАЯ КОНЦОВКА','NEW ENDING')} ${found}/${ENDINGS.length}</span>`:''}<div class="big">${esc(big)}</div><p>${esc(E.x(age))}</p><div class="stats"><span>${T('Лет в профессии','Years worked')}</span><b>${years}</b><span>${T('Грейд','Grade')}</span><b>${esc(gradeName())}</b><span>${T('Капитал','Net worth')}</span><b>${fmt(worth)}</b><span>${T('Цель FIRE','FIRE goal')}</span><b>${fmt(fire())}</b><span>${T('Кликов','Clicks')}</span><b>${S.clicks}</b><span>${T('Поколение','Generation')}</span><b>${S.gen}</b>${best!=null?`<span>${T('Рекорд: пенсия в','Record: retired at')}</span><b>${best}</b>`:''}</div>${chart}`,choices);
+}
+// Net worth by year against the FIRE goal, with dots for key moments and a list of them below
+function lifeChart(worth,endAge){
+  const pts=S.hist.concat([[endAge,Math.round(worth),Math.round(fire())]]);
+  if(pts.length<2)return'';
+  const W=300,H=120,pl=4,pr=4,pt=10,pb=14,a0=22,a1=Math.max(endAge,a0+5);
+  const vmax=Math.max(1,...pts.map(p=>Math.max(p[1],p[2])))*1.08;
+  const X=a=>pl+(a-a0)/(a1-a0)*(W-pl-pr),Y=v=>pt+(1-Math.max(0,v)/vmax)*(H-pt-pb);
+  const line=k=>pts.map(p=>`${X(p[0]).toFixed(1)},${Y(p[k]).toFixed(1)}`).join(' ');
+  const at=a=>{let i=pts.findIndex(p=>p[0]>=a);if(i<=0)return pts[Math.max(0,i)][1];const[p0,p1]=[pts[i-1],pts[i]];return p0[1]+(p1[1]-p0[1])*((a-p0[0])/((p1[0]-p0[0])||1));};
+  const dots=S.marks.map(([a,l])=>`<circle cx="${X(a).toFixed(1)}" cy="${Y(at(a)).toFixed(1)}" r="2.6" fill="#ffb84d" stroke="#000" stroke-width="1"><title>${esc(a+' · '+l)}</title></circle>`).join('');
+  const svg=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(T('График капитала по годам','Net worth by year'))}">
+    <line x1="${pl}" x2="${W-pr}" y1="${H-pb}" y2="${H-pb}" stroke="#403a76"/>
+    <polyline points="${line(2)}" fill="none" stroke="#ffb84d" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <polyline points="${line(1)}" fill="none" stroke="#7ee0a1" stroke-width="2"/>${dots}
+    <text x="${pl}" y="${H-3}" fill="#a69fd8" font-size="8">22</text><text x="${W-pr}" y="${H-3}" fill="#a69fd8" font-size="8" text-anchor="end">${endAge}</text>
+    <text x="${pl}" y="8" fill="#a69fd8" font-size="8">${fmt(vmax/1.08)}</text></svg>`;
+  const legend=`<div class="legend"><span><i style="background:#7ee0a1"></i>${T('Капитал','Net worth')}</span><span><i style="background:#ffb84d"></i>${T('Цель FIRE','FIRE goal')}</span></div>`;
+  const ms=S.marks.slice(-10).map(([a,l])=>`<li><b>${a}</b> · ${esc(l)}</li>`).join('');
+  return `<h3>${T('Твоя жизнь','Your life')}</h3>${svg}${legend}${ms?`<ul class="moments">${ms}</ul>`:''}`;
 }
 // Heirs pick one of three random traits, then may keep one item from the parents' life
 function pickHeir(L,inherit,best,prevOwned){
@@ -725,6 +766,9 @@ function tick(dt){
   if(S.crypto>0){const y=dt/YEAR;S.crypto*=Math.exp((.12-.5*.81)*y+.9*Math.sqrt(y)*gauss());}
   // Birthday: tax refund on what was invested during the year
   if(Math.floor(S.age)>prevYear){if(S.yearInv>0){const refund=Math.min(S.yearInv*.13,3000*(1+.25*S.grade));S.cash+=refund;log('good',T(`Налоговый вычет за вложения: +${fmt(refund)}.`,`Tax refund for investing: +${fmt(refund)}.`));}S.yearInv=0;}
+  if(!S.hist.length)S.hist.push([22,Math.round(nw()),Math.round(fire())]);
+  if(Math.floor(S.age)>prevYear)S.hist.push([Math.floor(S.age),Math.round(nw()),Math.round(fire())]);
+  {const y=dt/YEAR;S.clickRate+=(S.clickAcc/y-S.clickRate)*Math.min(1,y);S.clickAcc=0;}
   S.xp+=passiveXp()*dt;
   if(S.calm){calmAcc+=dt*2;while(calmAcc>=1){calmAcc--;autoWork();}}
   S.energy=Math.min(maxE(),S.energy+(regen()-drain())*dt);
@@ -744,8 +788,8 @@ function tick(dt){
   if(S.burn>=100&&!S.burnHit){burnoutEvent();return;}
   if(S.burn<80)S.burnHit=false;
   if(S.startup&&S.age>=S.startup.until){S.startup=null;
-    if(rnd()<.2){track('startup_result',{exit:true});const x=1500000;S.cash+=x;S.unicorn=true;modal(T('Экзит!','Exit!'),`<p>${T('Стартап купила корпорация. Твой опцион:','A corporation bought the startup. Your options:')} <b>${fmt(x)}</b>.</p>`,[{l:T('Ура','Hooray'),primary:true}]);jingle([523,659,784,1046,1318,1568]);}
-    else{track('startup_result',{exit:false});modal(T('Стартап закрылся','The startup shut down'),`<p>${T('Деньги кончились, друг уехал на ретрит. Ты возвращаешься на обычную зарплату.','The money ran out and your friend left for a retreat. Back to a regular salary.')}</p>`,[{l:T('Ну что ж','Oh well'),primary:true}]);}
+    if(rnd()<.2){track('startup_result',{exit:true});mark(T('Экзит!','Exit!'));const x=1500000;S.cash+=x;S.unicorn=true;modal(T('Экзит!','Exit!'),`<p>${T('Стартап купила корпорация. Твой опцион:','A corporation bought the startup. Your options:')} <b>${fmt(x)}</b>.</p>`,[{l:T('Ура','Hooray'),primary:true}]);jingle([523,659,784,1046,1318,1568]);}
+    else{track('startup_result',{exit:false});mark(T('Стартап закрылся','Startup closed'));modal(T('Стартап закрылся','The startup shut down'),`<p>${T('Деньги кончились, друг уехал на ретрит. Ты возвращаешься на обычную зарплату.','The money ran out and your friend left for a retreat. Back to a regular salary.')}</p>`,[{l:T('Ну что ж','Oh well'),primary:true}]);}
     return;}
   if(!S.barista&&S.grade<GR.length-1&&S.xp>=need()){promo();return;}
   S.eventT-=dt;if(S.eventT<=0){S.eventT=(32+rnd()*28)*(trait('networker')?.75:1);triggerEvent();return;}
@@ -777,8 +821,27 @@ function renderHUD(){
   $('bBar').style.width=S.burn+'%';$('bNum').textContent=S.burn>=1?`${Math.round(S.burn)}% · ${T('доход','income')} −${Math.round(S.burn/2)}%`:'0%';
   const f=fire(),w=nw();$('fBar').style.width=Math.max(0,Math.min(1,w/f))*100+'%';$('fNum').textContent=`${fmt(w)} / ${fmt(f)}`;
   $('retire').hidden=!(S.started&&!S.over&&w>=f);
+  renderEta(w,f);
   const cb=$('calmBtn');setText(cb,`${T('Работать спокойно','Steady work')}: ${S.calm?T('вкл','on'):T('выкл','off')}`);cb.classList.toggle('on',!!S.calm);
   setText($('calmHint'),S.calm&&calmResting?T('Герой отдыхает и вернётся к работе, когда энергия восстановится до 50%.','The hero is resting and will resume once energy is back to 50%.'):T('Герой сам работает вполсилы, 2 раза в секунду. Отдыхает, когда энергии меньше 30%.','The hero works on autopilot at half power, 2 times a second. Rests when energy drops below 30%.'));
+}
+// Forecast: yearly savings (salary − expenses + recent click income) plus investment growth, stepped year by year
+function yearsWord(n){if(LANG==='en')return n===1?'year':'years';const a=n%10,b=n%100;return a===1&&b!==11?'год':a>=2&&a<=4&&(b<12||b>14)?'года':'лет';}
+function fireEta(){
+  const F=fire(),W=nw();if(W>=F)return 0;
+  const A=salary()+petInc(S.pet)-expenses()+Math.max(0,S.clickRate);
+  const r=W>0?Math.max(0,(S.etf*.07+S.bonds*.035)/W):0;
+  let w=W;for(let n=1;n<=END_AGE-Math.floor(S.age);n++){w=w*(1+r)+A;if(w>=F)return n;}
+  return null;
+}
+let etaT=0;
+function renderEta(w,f){
+  if(performance.now()-etaT<1000&&$('eta').textContent)return;etaT=performance.now();
+  const el=$('eta');
+  if(w>=f){el.className='eta ready';el.innerHTML=`<b>${T('Можно увольняться!','You can quit now!')}</b>`;return;}
+  const n=fireEta();el.className='eta';
+  el.innerHTML=n==null?T('При текущем темпе — не раньше <b>67</b>','At this pace: not before <b>67</b>')
+    :T(`До FIRE при текущем темпе: <b>≈ ${n} ${yearsWord(n)}</b>, к ${Math.floor(S.age)+n}`,`FIRE at this pace: <b>≈ ${n} ${yearsWord(n)}</b>, by ${Math.floor(S.age)+n}`);
 }
 // The shop DOM is rebuilt only when the set of visible items changes; every tick just patches text and button state in place
 let shopStruct='', shopRows={};
@@ -1090,7 +1153,7 @@ function start(data){
   label();renderHUD();renderShop(true);requestAnimationFrame(frame);
 }
 // Local testing hook (never exposed on the live site)
-if(location.hostname==='127.0.0.1')window.__car={get S(){return S;},set S(v){S=v;},ending,triggerEvent,burnoutEvent,showCollection,shareResult,EVENTS,meta};
+if(location.hostname==='127.0.0.1')window.__car={BAL,get S(){return S;},set S(v){S=v;},setSim(v){SIM=v;},fresh,tick,work,buyItem,ITEMS,becomeBarista,fireEta,nw,fire,get modalOpen(){return modalOpen;},ending,triggerEvent,burnoutEvent,showCollection,shareResult,EVENTS,meta};
 window.claude?.hot?.snapshot?.(()=>({S}));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
 })();
