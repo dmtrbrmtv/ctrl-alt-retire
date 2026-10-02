@@ -135,6 +135,8 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 .choice{text-align:left;background:var(--panel2);border:2px solid var(--line);padding:10px 12px;font-size:15px}
 .choice:hover{border-color:var(--amber)}
 .choice.primary{background:var(--amber);color:#2b1700;border-color:#000;font-weight:600}
+.lhNote{font-size:15px;border-left:3px solid #6fb7b8;padding-left:10px}
+.choice.lh{border-color:#6fb7b8;color:#bfe3e3}
 .choice.share{background:var(--money);color:#10261a;border-color:#000;font-weight:600}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
 .card{background:var(--panel2);border:2px solid var(--line);padding:8px 10px;display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -655,10 +657,11 @@ function backToIT(){mark(T('Снова в IT','Back to tech'));S.barista=false;S
 function becomeBarista(){mark(T('Бариста','Barista'));S.barista=true;S.burn=0;S.freelance=false;S.hard=false;S.startup=null;track('career_change',{to:'barista'});log('good',T('Ты теперь бариста. Вместо Jira — очередь за капучино.','You are a barista now. A cappuccino queue instead of Jira.'));log('ping',T('@olga_pm: а можно тебе ещё одну маленькую фичу? …ой','@olga_pm: could you take one tiny feature? …oh'));}
 function burnoutEvent(){
   S.burnHit=true;unlock('burnout');track('burnout');mark(T('Выгорание','Burnout'));
-  modal(T('Ты выгорел','You burned out'),`<p>${S.barista?T('Утром не получилось открыть кофейню. От звука кофемолки дёргается глаз, а латте-арт выходит грустным.','You could not open the café this morning. The grinder makes your eye twitch and the latte art looks sad.'):T('Утром не получилось открыть ноутбук. Буквы в Jira расплываются, а от звука Slack дёргается глаз.','You could not open the laptop this morning. Jira text blurs and the Slack sound makes your eye twitch.')}</p><p style="color:var(--muted)">${T('Выгорание режет доход с клика и опыт до 50%. Пора что-то менять.','Burnout cuts click income and XP by up to 50%. Time to change something.')}</p>`,[
+  modal(T('Ты выгорел','You burned out'),`<p>${S.barista?T('Утром не получилось открыть кофейню. От звука кофемолки дёргается глаз, а латте-арт выходит грустным.','You could not open the café this morning. The grinder makes your eye twitch and the latte art looks sad.'):T('Утром не получилось открыть ноутбук. Буквы в Jira расплываются, а от звука Slack дёргается глаз.','You could not open the laptop this morning. Jira text blurs and the Slack sound makes your eye twitch.')}</p><p style="color:var(--muted)">${T('Выгорание режет доход с клика и опыт до 50%. Пора что-то менять.','Burnout cuts click income and XP by up to 50%. Time to change something.')}</p><p class="lhNote">${T('А если устал не только герой, загляни на «Тропу к маяку»: 9 спокойных вопросов о самочувствии, около 3 минут. Ответы остаются у тебя.','And if it is not only the hero who is tired, take a walk on the "Lighthouse Path": 9 calm questions about how you feel, about 3 minutes. Your answers stay with you.')}</p>`,[
     {l:T('Отпуск за свой счёт: полгода без зарплаты, выгорание 0','Unpaid leave: half a year without pay, burnout reset'),primary:true,f(){S.burn=0;S.unemployedUntil=S.age+.5;S.energy=maxE();log('good',T('Полгода без работы. Ты снова различаешь цвета.','Half a year off. You can see colors again.'));}},
     ...(S.barista?[]:[{l:T(`Уйти в бариста: зарплата ${fmt(BARISTA_PAY)}, усталость втрое меньше, без повышений`,`Become a barista: ${fmt(BARISTA_PAY)} salary, a third of the fatigue, no promotions`),f(){becomeBarista();}}]),
-    {l:T('Терпеть: −40 энергии, выгорание 70%','Push through: −40 energy, burnout 70%'),f(){S.burn=70;S.energy=Math.max(12,S.energy-40);log('bad',T('Ты выбрал терпеть. Организм запомнил.','You chose to push through. Your body took note.'));}}
+    {l:T('Терпеть: −40 энергии, выгорание 70%','Push through: −40 energy, burnout 70%'),f(){S.burn=70;S.energy=Math.max(12,S.energy-40);log('bad',T('Ты выбрал терпеть. Организм запомнил.','You chose to push through. Your body took note.'));}},
+    {l:T('Пройти «Тропу к маяку» (откроется в новой вкладке)','Walk the "Lighthouse Path" (opens in a new tab)'),cls:'lh',keep:true,f(){window.open('/lighthouse/','_blank','noopener');track('lighthouse_open',{from:'burnout'});}}
   ]);
 }
 const EVENTS=[

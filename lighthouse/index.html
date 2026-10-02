@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Тихая пиксельная прогулка к маяку. По пути звери задают 9 вопросов о самочувствии (опросник PHQ-9). Около 3 минут, ответы никуда не отправляются.">
+<meta name="theme-color" content="#0e0f22">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ctrlaltretire.com/lighthouse/">
+<meta property="og:title" content="Тропа к маяку · Lighthouse Path">
+<meta property="og:description" content="Пиксельная прогулка и 9 вопросов о самочувствии. 3 минуты, ответы остаются у тебя.">
+<meta property="og:image" content="https://ctrlaltretire.com/lighthouse/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%230e0f22'/%3E%3Crect x='6' y='2' width='4' height='2' fill='%23ffd166'/%3E%3Crect x='5' y='4' width='6' height='2' fill='%23c8463d'/%3E%3Crect x='6' y='6' width='4' height='3' fill='%23f2ece0'/%3E%3Crect x='6' y='9' width='4' height='3' fill='%23c8463d'/%3E%3Crect x='5' y='12' width='6' height='2' fill='%23f2ece0'/%3E%3Crect x='3' y='14' width='10' height='2' fill='%234e4c60'/%3E%3C/svg%3E">
+<style>
+html,body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+img{max-width:100%}
+</style>
+<title>Тропа к маяку</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow column — pixel scene on top, RPG dialog box under it, results card unfolds below. Single night-sea look, set deliberately. */
+:root{
+  --ink:#0e0f22;      /* night sky ground */
+  --panel:#191a36;    /* dialog box */
+  --panel-2:#23244a;  /* buttons */
+  --line:#3d3c72;     /* pixel borders */
+  --text:#f4ead6;     /* warm paper */
+  --muted:#aaa4c8;
+  --lamp:#ffd166;     /* lighthouse light, the one accent */
+  --sea:#6fb7b8;
+  --alert:#ff9a86;
+  --alert-bg:#3a1f2c;
+  --display:"Press Start 2P", "Courier New", monospace;
+  --body:"Pixelify Sans", "Trebuchet MS", system-ui, sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html{background:var(--ink)}
+body{background:var(--ink);color:var(--text);font-family:var(--body);font-size:18px;line-height:1.45;padding-inline:16px;padding-block:16px 48px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-family:var(--display);font-size:11px;letter-spacing:.06em;color:var(--lamp);display:flex;align-items:center;gap:10px}
+.brand i{width:10px;height:10px;background:var(--lamp);box-shadow:0 0 0 2px var(--ink),0 0 0 4px var(--line);display:inline-block}
+.lang{display:flex;gap:0;border:3px solid var(--line)}
+.lang button{font-family:var(--display);font-size:10px;padding:8px 10px;min-height:38px;min-width:44px;background:transparent;color:var(--muted);border:0;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--lamp);color:var(--ink)}
+.hdr-r{display:flex;gap:10px;align-items:stretch}
+.snd{display:flex;align-items:center;justify-content:center;width:44px;min-height:44px;border:3px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;padding:0}
+.snd[aria-pressed="true"]{color:var(--lamp)}
+.snd svg{width:20px;height:20px;display:block}
+.snd:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.lang button:focus-visible,.btn:focus-visible,.choice:focus-visible,.back:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+
+.stage{position:relative;border:3px solid var(--text);box-shadow:inset 0 0 0 3px var(--ink),6px 6px 0 #00000080;background:#000;line-height:0}
+canvas{width:100%;max-width:100%;aspect-ratio:160/96;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:9%;gap:12px;text-align:center;pointer-events:none;line-height:1.3}
+.overlay h1{font-family:var(--display);font-weight:400;font-size:clamp(16px,4.6vw,34px);margin:0;color:var(--text);text-shadow:3px 3px 0 #1a1238,0 0 18px #ffd16655;text-wrap:balance}
+.overlay p{margin:0;font-family:var(--display);font-size:clamp(7px,1.5vw,11px);color:var(--lamp);letter-spacing:.08em;text-shadow:2px 2px 0 #1a1238}
+
+.dialog{position:relative;background:var(--panel);border:3px solid var(--text);box-shadow:inset 0 0 0 3px var(--panel),inset 0 0 0 5px var(--line),6px 6px 0 #00000080;padding:22px 22px 16px;min-height:220px;display:flex;flex-direction:column;gap:12px;cursor:default}
+.who{position:absolute;top:-14px;left:16px;font-family:var(--display);font-size:10px;letter-spacing:.06em;background:var(--lamp);color:var(--ink);padding:6px 9px;box-shadow:3px 3px 0 #00000080}
+.line{margin:0;font-size:19px;min-height:2.9em;max-width:62ch;text-wrap:pretty}
+.line.cursor::after{content:"▮";color:var(--lamp);margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.q{display:flex;flex-direction:column;gap:4px;border-top:3px dashed var(--line);padding-top:12px}
+.q .prompt{font-size:15px;color:var(--muted)}
+.q strong{font-size:21px;font-weight:600;line-height:1.35;text-wrap:balance}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.choices.solo{grid-template-columns:minmax(0,1fr)}
+.choice,.btn{font-family:var(--body);font-size:17px;text-align:left;color:var(--text);background:var(--panel-2);border:3px solid var(--text);box-shadow:0 4px 0 var(--line);padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:center;min-height:52px;transition:transform .06s}
+.choice:hover,.btn:hover{background:#2d2e5c}
+.choice:active,.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.choice .key{font-family:var(--display);font-size:9px;background:var(--ink);color:var(--lamp);padding:5px 6px;flex:none}
+.choice.sel{background:var(--lamp);color:var(--ink);border-color:var(--lamp)}
+.choice.sel .key{background:var(--ink)}
+.choices.solo .choice{justify-content:center;font-family:var(--display);font-size:12px;letter-spacing:.06em;background:var(--lamp);color:var(--ink);border-color:var(--lamp)}
+.choices.solo .choice .key{display:none}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:auto}
+.back{font-family:var(--display);font-size:9px;background:none;border:0;color:var(--muted);cursor:pointer;padding:6px 0}
+.back:hover{color:var(--text)}
+.lights{display:flex;align-items:center;gap:5px;font-family:var(--display);font-size:8px;color:var(--muted);letter-spacing:.06em}
+.lights b{width:9px;height:9px;background:var(--line);display:inline-block}
+.lights b.on{background:var(--lamp);box-shadow:0 0 6px var(--lamp)}
+.privacy{font-size:14px;color:var(--muted);margin:0;max-width:62ch}
+
+/* results */
+.result{display:flex;flex-direction:column;gap:18px;padding-top:10px}
+.card{background:var(--text);color:var(--ink);border:3px solid var(--ink);box-shadow:0 0 0 3px var(--text),8px 8px 0 3px #00000090;padding:22px;display:flex;flex-direction:column;gap:12px;margin:3px}
+.eyebrow{font-family:var(--display);font-size:9px;letter-spacing:.08em;color:#5b5480;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.card h2{font-family:var(--display);font-weight:400;font-size:16px;margin:0}
+.score{display:flex;align-items:baseline;gap:10px;font-variant-numeric:tabular-nums}
+.score b{font-family:var(--display);font-size:46px;font-weight:400;line-height:1}
+.score span{font-family:var(--display);font-size:12px;color:#5b5480}
+.scale{position:relative;display:flex;height:16px;border:3px solid var(--ink);margin-top:10px}
+.scale span{height:100%}
+.scale .mark{position:absolute;top:-12px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid var(--ink);transform:translateX(-50%)}
+.scale-l{display:flex;font-family:var(--display);font-size:7px;color:#5b5480;font-variant-numeric:tabular-nums}
+.scale-l span{text-align:center}
+.level{font-family:var(--display);font-size:12px;line-height:1.6;margin:4px 0 0;display:flex;align-items:center;gap:10px}
+.level i{width:14px;height:14px;flex:none;border:3px solid var(--ink)}
+.card p{margin:0;max-width:60ch}
+.card .diff{font-size:15px;color:#4a4468}
+.shot{font-size:14px;color:var(--muted);margin:-6px 0 0}
+
+.panel{background:var(--panel);border:3px solid var(--line);padding:18px;display:flex;flex-direction:column;gap:10px}
+.panel h3{font-family:var(--display);font-weight:400;font-size:11px;letter-spacing:.06em;color:var(--lamp);margin:0;line-height:1.6}
+.panel p{margin:0;max-width:62ch}
+.panel ul{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.panel li{display:flex;gap:10px}
+.panel li::before{content:"";width:8px;height:8px;margin-top:9px;background:var(--sea);flex:none}
+.crisis{background:var(--alert-bg);border-color:var(--alert)}
+.crisis h3{color:var(--alert)}
+.crisis li::before{background:var(--alert)}
+.crisis a.btn{text-decoration:none}
+.crisis a:not(.btn),.panel a.link{color:var(--text);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.num{font-family:var(--display);font-size:11px;letter-spacing:.04em;user-select:all;overflow-wrap:anywhere}
+textarea{width:100%;box-sizing:border-box;min-height:96px;resize:vertical;background:var(--ink);color:var(--text);border:3px solid var(--line);padding:10px;font:inherit;font-size:16px}
+textarea:focus{outline:none;border-color:var(--sea)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--display);font-size:10px;letter-spacing:.04em;min-height:44px;text-decoration:none;justify-content:center}
+.btn.primary{background:var(--lamp);color:var(--ink);border-color:var(--lamp)}
+.check{display:flex;gap:10px;align-items:center;font-size:16px;cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--lamp)}
+.about{font-size:14px;color:var(--muted);margin:0;max-width:66ch}
+
+@media (max-width:520px){
+  body{font-size:17px}
+  .choices{grid-template-columns:minmax(0,1fr)}
+  .dialog{padding:20px 14px 14px}
+  .line{font-size:17px}
+  .q strong{font-size:19px}
+  .choice{min-height:46px;font-size:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  .line.cursor::after{animation:none}
+  .choice,.btn{transition:none}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><i></i><span data-t="brand">Тропа к маяку</span></div>
+    <div class="hdr-r">
+      <button class="snd" id="snd" type="button" aria-pressed="true"></button>
+      <div class="lang" role="group" aria-label="Language">
+        <button id="lang-ru" type="button" aria-pressed="true">RU</button>
+        <button id="lang-en" type="button" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="stage">
+    <canvas id="cv" width="160" height="96" aria-label="Пиксельный берег и маяк"></canvas>
+    <div class="overlay" id="overlay">
+      <h1 data-t="title">Тропа к маяку</h1>
+      <p data-t="sub">9 вопросов · 3 минуты</p>
+    </div>
+  </div>
+
+  <section class="dialog" id="dlg" aria-live="polite">
+    <div class="who" id="who" hidden></div>
+    <p class="line" id="line"></p>
+    <div class="q" id="q" hidden><span class="prompt" id="qprompt"></span><strong id="qtext"></strong></div>
+    <div class="choices" id="choices"></div>
+    <div class="foot">
+      <button class="back" id="back" type="button" hidden></button>
+      <div class="lights" id="lights"></div>
+    </div>
+  </section>
+  <p class="privacy" id="privacy"></p>
+
+  <section class="result" id="result" hidden></section>
+</div>
+
+<script>
+(function(){
+"use strict";
+const INVITE_URL = "https://ctrlaltretire.com/lighthouse/";
+const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- text ---------- */
+const T = {
+ru:{
+  brand:'Тропа к маяку', title:'Тропа к маяку', sub:'9 вопросов · около 3 минут',
+  titleLine:'Сумерки на берегу. Вдалеке погас маяк. Пройдёшь к нему по тропе?',
+  start:'Начать путь',
+  privacy:'Ответы остаются на твоём устройстве и никуда не отправляются. Внутри — опросник PHQ-9: это скрининг, а не диагноз.',
+  keeper:'Смотритель маяка',
+  intro:'Эй, на берегу! Я смотритель. Огонь сегодня погас, и мне нужна помощь. Иди ко мне по тропе. По пути встретишь девять жителей побережья, и каждый спросит, как прошли твои последние две недели. Правильных ответов нет. Отвечай как есть.',
+  go:'Иду',
+  walking:['Волны шуршат по гальке…','Ветер пахнет солью…','Где-то кричит чайка…','Песок мягкий под ногами…','Небо понемногу светлеет…'],
+  prompt:'Как часто за последние 2 недели тебя беспокоило:',
+  answers:['Ни разу','Несколько дней','Больше половины дней','Почти каждый день'],
+  guides:['Лиса','Сова','Тюлень','Краб','Ёж','Кот','Чайка','Черепаха','Заяц'],
+  intros:[
+    'Привет, путник. Я Лиса, стерегу начало тропы. Присядь со мной на минутку.',
+    'Ух. Я Сова. В темноте я многое вижу. Расскажи как есть.',
+    'Я Тюлень. Сплю на тёплых камнях под шум волн. А как спится тебе?',
+    'Я Краб. Целый день бегаю бочком и иногда очень устаю.',
+    'Я Ёж, ищу яблоки к ужину. Можно спросить про твой аппетит?',
+    'Я Кот. Ко мне можно прийти с любым ответом. Я не сужу.',
+    'Я Чайка. Слежу за всем побережьем сразу, и сосредоточиться бывает трудно.',
+    'Я Черепаха. Медленно — это нормально. Но спросить мне важно.',
+    'Я Заяц. Следующий вопрос непростой. Любой ответ здесь в безопасности, а в конце пути я покажу, где найти поддержку.'
+  ],
+  items:[
+    'Мало интереса или удовольствия от того, чем занимаешься',
+    'Подавленное настроение, тоска или чувство безнадёжности',
+    'Трудно заснуть, сон прерывистый — или, наоборот, слишком много сна',
+    'Усталость или нехватка сил',
+    'Плохой аппетит или переедание',
+    'Плохое мнение о себе: ощущение собственной несостоятельности или того, что подводишь себя или семью',
+    'Трудно сосредоточиться — например, на чтении или на просмотре фильма',
+    'Движения или речь настолько замедлены, что это могли заметить другие. Или наоборот: такое беспокойство и суетливость, что двигаешься гораздо больше обычного',
+    'Мысли о том, что лучше было бы умереть, или о том, чтобы как-то навредить себе'
+  ],
+  intro10:'Ты почти у цели. Последний вопрос, и я зажгу огонь.',
+  q10:'Насколько всё это мешало работать, заниматься домашними делами или ладить с людьми?',
+  a10:['Совсем не мешало','Немного мешало','Сильно мешало','Очень сильно мешало'],
+  back:'← Назад', lights:'ОГОНЬКИ',
+  endLine:'Путь пройден, и маяк снова горит. Спасибо за эти несколько минут для себя. Посмотрим, что показали ответы?',
+  seeResult:'Посмотреть итог',
+  resultHint:'Итог ниже. Можно пройти путь ещё раз через пару недель и сравнить.',
+  again:'Пройти заново',
+  resTitle:'Итог пути', of:'из 27',
+  levels:['Минимальные симптомы','Лёгкие симптомы','Умеренные симптомы','Умеренно тяжёлые симптомы','Тяжёлые симптомы'],
+  desc:[
+    'Признаков депрессии сейчас почти нет. Хорошее время, чтобы продолжать то, что тебя поддерживает.',
+    'Есть лёгкие признаки. Так бывает от усталости и стресса. Стоит понаблюдать за собой.',
+    'Признаки заметные. Стоит поговорить со специалистом: с этим хорошо умеют помогать.',
+    'Признаки выраженные. Лучше обратиться к врачу или психотерапевту в ближайшее время.',
+    'Признаки сильные. Пожалуйста, обратись к врачу как можно скорее и расскажи близким, что тебе тяжело.'
+  ],
+  diff:'Насколько мешает жить:',
+  tipsTitle:'Что можно сделать',
+  tips:[
+    ['Продолжай то, что помогает: сон, движение, люди рядом.','Пройди путь снова через пару недель или если станет тяжелее.'],
+    ['Режим сна, 20–30 минут движения в день, дневной свет по утрам.','Расскажи кому-то из близких, как ты.','Если через две недели не легче, сходи к терапевту или психологу.'],
+    ['Запишись к врачу, психиатру или психологу и покажи этот результат.','Поделись с близким человеком.','Депрессия хорошо лечится: психотерапия и лекарства помогают большинству.'],
+    ['Обратись к врачу — психиатру или терапевту — в ближайшие дни.','Не оставайся с этим один на один: расскажи близким.','Если станет хуже или появятся мысли о смерти, сразу звони на линию помощи или в 112.'],
+    ['Обратись к врачу — психиатру или терапевту — как можно скорее.','Попроси кого-то из близких побыть рядом и помочь записаться.','Если станет хуже или появятся мысли о смерти, сразу звони на линию помощи или в 112.']
+  ],
+  crisisTitle:'Пожалуйста, не оставайся с этим один на один',
+  crisis9:'Ты отметил(а) мысли о смерти или о том, чтобы навредить себе. Это сигнал, что тебе сейчас нужна поддержка. Поговори с кем-нибудь сегодня: с близким, с врачом или с линией помощи. Там выслушают.',
+  crisisHigh:'Результат говорит о большой нагрузке. Поговори с кем-нибудь сегодня: с близким, с врачом или с линией помощи.',
+  lines:[
+    ['Опасность прямо сейчас','112 (Европа, Россия и многие страны) · 911 (США, Мексика)'],
+    ['Нидерланды — 113 Zelfmoordpreventie','0800-0113 (бесплатно) или 113'],
+    ['Россия — экстренная психологическая помощь МЧС','+7 495 989-50-50'],
+    ['США — Suicide & Crisis Lifeline','988'],
+    ['Мексика — Línea de la Vida','800 911 2000']
+  ],
+  otherCountries:'Бесплатные линии в других странах:',
+  sos:'Можно просто отправить близкому:',
+  sosMsg:'Мне сейчас очень тяжело. Можешь побыть со мной на связи?',
+  shareTitle:'Рассказать близкому',
+  shareNote:'Поделиться — тоже забота о себе. Текст можно поправить.',
+  incScore:'Добавить мой результат',
+  msgScore:(s,l)=>`Привет! Хочу поделиться, как я себя чувствую. По опроснику PHQ-9 у меня ${s} из 27 — «${l.toLowerCase()}». Можем поговорить на днях?`,
+  msgPlain:'Привет! Хочу поделиться, как я себя чувствую в последнее время. Можем поговорить на днях?',
+  copy:'Скопировать', copied:'Скопировано', selected:'Выделено — нажми Ctrl+C',
+  inviteTitle:'Позвать в путь',
+  inviteNote:'Отправь игру тем, о ком заботишься.',
+  invite:u=>`Короткая пиксельная прогулка к маяку: по пути звери задают 9 вопросов о самочувствии (опросник PHQ-9). Около 3 минут, ответы никуда не отправляются. Пройди, когда будет минутка${u?': '+u:'.'}`,
+  shot:'Карточку можно сохранить скриншотом.',
+  about:'PHQ-9 (Patient Health Questionnaire-9) — опросник, которым врачи пользуются для скрининга депрессии. Авторы — R. Spitzer, J. Williams, K. Kroenke и коллеги; он свободен для использования. Итог показывает, насколько выражены симптомы, а диагноз ставит только специалист.',
+  canvas:'Пиксельный берег и маяк',
+  soundOn:'Звук включён. Выключить', soundOff:'Звук выключен. Включить'
+},
+en:{
+  brand:'Lighthouse Path', title:'Lighthouse Path', sub:'9 questions · about 3 minutes',
+  titleLine:'Dusk on the shore. The lighthouse in the distance has gone dark. Will you walk the path to it?',
+  start:'Start walking',
+  privacy:'Your answers stay on your device and are never sent anywhere. Inside is the PHQ-9 questionnaire: a screening, not a diagnosis.',
+  keeper:'Lighthouse keeper',
+  intro:'Hey, down on the shore! I\'m the keeper. The light went out tonight and I need a hand. Walk the path to me. On the way you\'ll meet nine creatures of the coast, and each will ask how your last two weeks have been. There are no right answers. Just answer as it is.',
+  go:'On my way',
+  walking:['Waves rustle over the pebbles…','The wind smells of salt…','A gull calls somewhere…','Soft sand under your feet…','The sky is slowly getting lighter…'],
+  prompt:'Over the last 2 weeks, how often have you been bothered by:',
+  answers:['Not at all','Several days','More than half the days','Nearly every day'],
+  guides:['Fox','Owl','Seal','Crab','Hedgehog','Cat','Gull','Turtle','Hare'],
+  intros:[
+    'Hi, traveler. I\'m Fox, I guard the start of the path. Sit with me for a minute.',
+    'Hoo. I\'m Owl. I see a lot in the dark. Tell me how it is.',
+    'I\'m Seal. I sleep on warm rocks to the sound of waves. How do you sleep?',
+    'I\'m Crab. I run sideways all day, and sometimes I get really tired.',
+    'I\'m Hedgehog, looking for apples for dinner. Can I ask about your appetite?',
+    'I\'m Cat. You can come to me with any answer. I don\'t judge.',
+    'I\'m Gull. I watch the whole coast at once, and focusing can be hard.',
+    'I\'m Turtle. Slow is fine. Still, this one matters to me.',
+    'I\'m Hare. The next question is a hard one. Any answer is safe here, and at the end of the path I\'ll show you where to find support.'
+  ],
+  items:[
+    'Little interest or pleasure in doing things',
+    'Feeling down, depressed, or hopeless',
+    'Trouble falling or staying asleep, or sleeping too much',
+    'Feeling tired or having little energy',
+    'Poor appetite or overeating',
+    'Feeling bad about yourself — or that you are a failure or have let yourself or your family down',
+    'Trouble concentrating on things, such as reading the newspaper or watching television',
+    'Moving or speaking so slowly that other people could have noticed. Or the opposite — being so fidgety or restless that you have been moving around a lot more than usual',
+    'Thoughts that you would be better off dead, or of hurting yourself in some way'
+  ],
+  intro10:'You\'re almost here. One last question, and I\'ll light the lamp.',
+  q10:'How difficult have these problems made it for you to do your work, take care of things at home, or get along with other people?',
+  a10:['Not difficult at all','Somewhat difficult','Very difficult','Extremely difficult'],
+  back:'← Back', lights:'LIGHTS',
+  endLine:'You made it, and the lighthouse is shining again. Thank you for taking these few minutes for yourself. Shall we look at what your answers show?',
+  seeResult:'See my result',
+  resultHint:'Your result is below. You can walk the path again in a couple of weeks and compare.',
+  again:'Walk again',
+  resTitle:'End of the path', of:'of 27',
+  levels:['Minimal symptoms','Mild symptoms','Moderate symptoms','Moderately severe symptoms','Severe symptoms'],
+  desc:[
+    'Almost no signs of depression right now. A good time to keep doing what supports you.',
+    'Some mild signs. This can come from tiredness and stress. Keep an eye on how you feel.',
+    'Noticeable signs. It is worth talking to a professional — this is very treatable.',
+    'Clear signs. Please see a doctor or therapist soon.',
+    'Strong signs. Please see a doctor as soon as you can, and tell someone close that you are struggling.'
+  ],
+  diff:'How much it gets in the way:',
+  tipsTitle:'What you can do',
+  tips:[
+    ['Keep doing what helps: sleep, movement, people around you.','Walk the path again in a couple of weeks, or if things get harder.'],
+    ['Regular sleep, 20–30 minutes of movement a day, daylight in the morning.','Tell someone close how you are doing.','If it is not easier in two weeks, see a GP or a psychologist.'],
+    ['Book a visit with a GP, psychiatrist or psychologist and show them this result.','Share with someone close to you.','Depression is very treatable: therapy and medication help most people.'],
+    ['See a doctor — a psychiatrist or GP — in the next few days.','Don\'t carry this alone: tell people close to you.','If it gets worse or thoughts of death appear, call a helpline or 112 right away.'],
+    ['See a doctor — a psychiatrist or GP — as soon as you can.','Ask someone close to stay with you and help you book the visit.','If it gets worse or thoughts of death appear, call a helpline or 112 right away.']
+  ],
+  crisisTitle:'Please don\'t carry this alone',
+  crisis9:'You marked thoughts of death or of hurting yourself. That is a sign you need support right now. Talk to someone today: a person close to you, a doctor, or a helpline. They will listen.',
+  crisisHigh:'Your result shows a heavy load. Talk to someone today: a person close to you, a doctor, or a helpline.',
+  lines:[
+    ['In danger right now','112 (Europe, Russia and many countries) · 911 (US, Mexico)'],
+    ['Netherlands — 113 Zelfmoordpreventie','0800-0113 (free) or 113'],
+    ['Russia — EMERCOM psychological help','+7 495 989-50-50'],
+    ['USA — Suicide & Crisis Lifeline','988'],
+    ['Mexico — Línea de la Vida','800 911 2000']
+  ],
+  otherCountries:'Free helplines in other countries:',
+  sos:'You can simply send this to someone close:',
+  sosMsg:'I\'m having a really hard time right now. Can you stay in touch with me?',
+  shareTitle:'Tell someone close',
+  shareNote:'Sharing is also a way to take care of yourself. You can edit the text.',
+  incScore:'Include my result',
+  msgScore:(s,l)=>`Hi! I want to share how I've been feeling. On the PHQ-9 questionnaire I scored ${s} out of 27 — "${l.toLowerCase()}". Can we talk in the next few days?`,
+  msgPlain:'Hi! I want to share how I\'ve been feeling lately. Can we talk in the next few days?',
+  copy:'Copy', copied:'Copied', selected:'Selected — press Ctrl+C',
+  inviteTitle:'Invite someone',
+  inviteNote:'Send the game to people you care about.',
+  invite:u=>`A short pixel walk to a lighthouse: on the way, animals ask 9 questions about how you feel (the PHQ-9 questionnaire). About 3 minutes, answers are never sent anywhere. Take a walk when you have a minute${u?': '+u:'.'}`,
+  shot:'Take a screenshot to keep the card.',
+  about:'PHQ-9 (Patient Health Questionnaire-9) is a questionnaire doctors use to screen for depression. Developed by R. Spitzer, J. Williams, K. Kroenke and colleagues; free to use. The result shows how strong symptoms are, but only a professional can make a diagnosis.',
+  canvas:'Pixel shore and lighthouse',
+  soundOn:'Sound is on. Turn off', soundOff:'Sound is off. Turn on'
+}};
+const LEVEL_COLORS=['#6fb7b8','#9cc47a','#f2c14e','#f0904a','#e5636a'];
+
+let lang='ru';
+try{ const s=localStorage.getItem('lh-lang'); if(s==='ru'||s==='en') lang=s; else if(!(navigator.language||'').toLowerCase().startsWith('ru')) lang='en'; }catch(e){ if(!(navigator.language||'').toLowerCase().startsWith('ru')) lang='en'; }
+const L=()=>T[lang];
+
+/* ---------- state ---------- */
+const S={phase:'title',idx:0,ans:Array(10).fill(null),px:46,target:46,walking:false,onArrive:null,final:false,incScore:true};
+const stopX=i=>76+i*110;
+const FINAL_CAM=stopX(9)-46;
+const score=()=>S.ans.slice(0,9).reduce((a,v)=>a+(v||0),0);
+const levelOf=s=>s<5?0:s<10?1:s<15?2:s<20?3:4;
+
+/* ---------- canvas ---------- */
+const W=160,H=96,HOR=58,SUNX=34;
+const cv=document.getElementById('cv'), cx=cv.getContext('2d');
+cx.imageSmoothingEnabled=false;
+const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+const rgb=c=>`rgb(${c[0]},${c[1]},${c[2]})`;
+function px(x,y,w,h,c){cx.fillStyle=c;cx.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)));}
+const BAYER=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+function hash(n){n=(n^61)^(n>>>16);n=n+(n<<3);n^=n>>>4;n=Math.imul(n,0x27d4eb2d);n^=n>>>15;return n>>>0;}
+
+const SKY={dt:hex('#120f2a'),dm:hex('#3b2552'),db:hex('#7d4064'),at:hex('#4a7bbb'),am:hex('#e9a58a'),ab:hex('#ffd9a0')};
+const skyCache=new Map();
+function getSky(p){
+  const k=Math.round(p*48); if(skyCache.has(k)) return skyCache.get(k);
+  const q=k/48, c=document.createElement('canvas'); c.width=W; c.height=HOR;
+  const g=c.getContext('2d'), img=g.createImageData(W,HOR);
+  const top=mix(SKY.dt,SKY.at,q), mid=mix(SKY.dm,SKY.am,q), bot=mix(SKY.db,SKY.ab,q);
+  for(let y=0;y<HOR;y++){
+    const t=y/HOR, col=t<.62?mix(top,mid,t/.62):mix(mid,bot,(t-.62)/.38);
+    for(let x=0;x<W;x++){
+      const th=(BAYER[y&3][x&3]+.5)/16, o=(y*W+x)*4;
+      for(let ch=0;ch<3;ch++){const v=col[ch]/22,f=Math.floor(v);img.data[o+ch]=Math.min(255,(v-f>th?f+1:f)*22);}
+      img.data[o+3]=255;
+    }
+  }
+  g.putImageData(img,0,0); skyCache.set(k,c); return c;
+}
+const STARS=Array.from({length:42},(_,i)=>({x:hash(i*3+1)%W,y:hash(i*7+5)%(HOR-14),s:(hash(i+11)%5)/5}));
+function glow(x0,y0,r,col,strength){
+  for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+    const d=Math.sqrt(dx*dx+dy*dy); if(d>=r) continue;
+    const v=(1-d/r)*strength, X=Math.round(x0+dx), Y=Math.round(y0+dy);
+    if(v>(BAYER[Y&3][X&3]+.5)/16) px(X,Y,1,1,col);
+  }
+}
+function disc(x0,y0,r,col,maxY){
+  for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){ if(dx*dx+dy*dy<=r*r && y0+dy<maxY) px(x0+dx,y0+dy,1,1,col); }
+}
+
+/* sprites */
+const PAL={K:'#1a1423',W:'#f4efe6',O:'#e07a3a',B:'#7a5236',T:'#d9b38c',Y:'#f2c14e',G:'#8a93a6',R:'#d0493f',D:'#4a3426',C:'#4a4f63',P:'#e79aa8',
+  H:'#4f7fa3',S:'#f0c8a0',E:'#1a1423',J:'#35587a',L:'#2b2b3d',M:'#5a3a2a',N:'#26305a',F:'#d8d2c4',V:'#6aa877',A:'#2f6b45',X:'#ffd166'};
+const SPR={
+ p0:["..HHHH..",".HHHHHH.",".HSSSSH.",".HSSESH.",".HSSSSH.","..RRRR..",".JJJRJJ.","SJJJJJJS",".JJJJJJ.","..L..L..","..L..L..","..M..M.."],
+ p1:["..HHHH..",".HHHHHH.",".HSSSSH.",".HSSESH.",".HSSSSH.","..RRRR..",".JJJRJJ.","SJJJJJJS",".JJJJJJ.","..L..L..",".L....L.",".M....M."],
+ keeper:["..NNNN..",".NNNNNN.","NNNNNNNN",".SSSSSS.",".SESSES.",".FFSSFF.",".FFFFFF.","..FFFF..",".NNNNNN.","SNNXNNNS",".NNNNNN.","..L..L..","..M..M.."],
+ fox:["O.......O","OO.....OO","OOOOOOOOO","OKOOOOOKO","OOOWWWOOO",".OWWKWWO.","..WWWWW..","..OO.OO.."],
+ owl:["B.......B","BBBBBBBBB","BYYBBBYYB","BYKBTBKYB","BBBBTBBBB",".BTTTTTB.",".BTTTTTB.","..BBBBB..","..Y...Y.."],
+ seal:["...GGGG..","..GGGGGG.","..GKGGKG.","..GGWKWG.",".GGGGGGGG","GGGGGGGGG","GGGGGGGG.","G.GG..GG."],
+ crab:["R.......R","RR.....RR",".R.W.W.R.","..RKRKR..",".RRRRRRR.","RRRRRRRRR",".R.R.R.R.","R.......R"],
+ hedge:["..D.D.D...",".DDDDDDD..","DDDDDDDTT.","DDDDDDTKTT","DDDDDTTTTK",".DDDDTTTT.","..T....T.."],
+ cat:["C.......C","CC.....CC","CCCCCCCCC","CYKCCCKYC","CCCCPCCCC",".CCWWWCC.",".CCCCCCC.C",".CCCCCCCC.","..C...C..."],
+ gull:["...WWW....","..WWKWYY..","..WWWW....",".GWWWWW...","GGGWWWW...","..GGWWW...","...Y.Y...."],
+ turtle:["...AAA....","..AVAVA...",".AAAAAAA..",".AVAVAVAVV","AAAAAAAVKV",".VV...VVV."],
+ hare:[".W...W.",".W...W.",".WP.PW.",".W...W.","WWWWWWW","WKWWWKW","WWWPWWW",".WWWWW.",".W...W."]
+};
+const GUIDE_SPR=['fox','owl','seal','crab','hedge','cat','gull','turtle','hare'];
+function sprite(name,x,feet){
+  const rows=SPR[name], y0=feet-rows.length;
+  for(let r=0;r<rows.length;r++)for(let c=0;c<rows[r].length;c++){const ch=rows[r][c]; if(ch!=='.') px(x+c,y0+r,1,1,PAL[ch]);}
+}
+
+let tm=0, LAMP={x:0,y:0};
+function draw(){
+  const cam=Math.max(0,S.px-46), p=Math.min(1,cam/FINAL_CAM), lit=S.ans.slice(0,9).filter(v=>v!=null).length;
+  cx.drawImage(getSky(p),0,0);
+  // stars + moon
+  const sa=Math.max(0,1-p*1.7);
+  if(sa>0){ STARS.forEach((s,i)=>{const a=sa*(.45+.55*Math.abs(Math.sin(tm*(.6+s.s)+i))); cx.globalAlpha=a; px(s.x,s.y,1,1,'#fff6e0');}); cx.globalAlpha=1;
+    cx.globalAlpha=Math.max(0,1-p*2.4); disc(122,13,4,'#f1e6c8',99); disc(124,12,4,rgb(mix(SKY.dt,SKY.at,p)),99); cx.globalAlpha=1; }
+  // sun
+  if(p>.42){ const sy=Math.round(HOR+7-(p-.42)/.58*17); glow(SUNX,sy,12,'#ffd27a',.4); disc(SUNX,sy,6,'#ffcf73',HOR); }
+  // far hills
+  const hill=rgb(mix(hex('#211a3a'),hex('#6a7d9a'),p));
+  for(let x=0;x<W;x++){const wx=x+cam*.12; const hh=Math.round(4+3*Math.sin(wx*.045)+2*Math.sin(wx*.11+1.3)); if(hh>0) px(x,HOR-hh,1,hh,hill);}
+  // sea
+  const st=mix(hex('#1b2246'),hex('#4f86a8'),p), sb=mix(hex('#283060'),hex('#86b8c4'),p);
+  for(let y=HOR;y<74;y++) px(0,y,W,1,rgb(mix(st,sb,(y-HOR)/16)));
+  const gl=rgb(mix(hex('#5a6aa8'),hex('#fff1c9'),p));
+  for(let i=0;i<46;i++){const y=HOR+1+((i*7)%15), sp=.25+(y-HOR)/16*.5; const x=((i*53-cam*sp+Math.sin(tm*.8+i)*2)%180+180)%180-10; if(((Math.floor(tm*2)+i)%4)!==0) px(x,y,2+(i%3),1,gl);}
+  if(p>.42){ cx.globalAlpha=Math.min(1,(p-.42)*3); for(let y=HOR+1;y<74;y+=2){const w=2+((y+Math.floor(tm*4))%3); px(SUNX-w/2,y,w,1,'#ffe3a0');} cx.globalAlpha=1; }
+  drawLighthouse(p,lit);
+  // beach
+  const sand=mix(hex('#2d2640'),hex('#d8b98e'),p), sandD=rgb(mix(hex('#221d33'),hex('#b8966c'),p));
+  px(0,74,W,22,rgb(sand));
+  px(0,74,W,2,rgb(mix(sand,hex('#9fc7cf'),.3)));
+  const foam=rgb(mix(hex('#5b6597'),hex('#ffffff'),p*.9));
+  for(let x=0;x<W;x++){const wx=x+Math.floor(cam); const fy=74+Math.round(Math.sin(wx*.15+tm*1.6)*.9+.4); if((wx+Math.floor(tm*3))%5) px(x,fy,1,1,foam);}
+  for(let x=0;x<W;x++){const wx=x+Math.floor(cam), h=hash(wx); if(h%23===0) px(x,79+(h>>>5)%15,2,1,sandD);}
+  // lanterns
+  for(let i=0;i<9;i++){
+    const sx=Math.round(stopX(i)+26-cam); if(sx<-12||sx>W+12) continue;
+    const on=S.ans[i]!=null;
+    if(on) glow(sx,76,8,'#ffd166',.5);
+    px(sx,77,1,10,'#2a2333'); px(sx-1,73,3,1,'#2a2333'); px(sx-1,74,3,3,on?'#ffd166':'#3d3a4a'); if(on) px(sx,75,1,1,'#fff6d0');
+    if(on) for(let k=0;k<2;k++){ if(((Math.floor(tm*3)+k+i)%5)===0) continue; px(sx+Math.sin(tm*1.3+k*2+i)*7,70+Math.cos(tm*1.1+k+i)*4,1,1,'#fff3a8'); }
+  }
+  // guides
+  for(let i=0;i<10;i++){
+    const sx=Math.round(stopX(i)+14-cam); if(sx<-14||sx>W+14) continue;
+    const name=i<9?GUIDE_SPR[i]:'keeper', w=SPR[name][0].length;
+    const bob=(!reduce && S.phase!=='walk' && S.idx===i && Math.floor(tm*2.5)%2)?1:0;
+    sprite(name,sx-Math.floor(w/2),87-bob);
+  }
+  // player
+  const fr=(S.walking && Math.floor(tm*8)%2)?'p1':'p0';
+  sprite(fr,Math.round(S.px-cam)-4,87);
+  // grass
+  const gc=rgb(mix(hex('#1a2630'),hex('#6e8f5a'),p));
+  for(let x=0;x<W;x++){const wx=Math.floor(x+cam*1.25), h=hash(wx+999); if(h%11===0){const hh=2+(h>>>4)%4; px(x,96-hh,1,hh,gc);}}
+}
+function drawLighthouse(p,lit){
+  const h=Math.round(20+p*30), x=Math.round(144-p*26), base=HOR+5;
+  const night=1-p, shade=hex('#1a1530');
+  const rock=rgb(mix(hex('#1a1630'),hex('#4e4c60'),p));
+  for(let r=0;r<7;r++){const w=Math.round(h*.4+r*2.2); px(x-w/2,base-4+r,w,1,rock);}
+  const lampH=Math.max(2,Math.round(h*.12)), roofH=Math.max(2,Math.round(h*.1)), towerH=h-lampH-roofH-1;
+  const wb=Math.max(5,Math.round(h*.26)), wt=Math.max(3,Math.round(wb*.68)), band=Math.max(2,Math.round(towerH/5));
+  const red=rgb(mix(hex('#c8463d'),shade,night*.6)), white=rgb(mix(hex('#f2ece0'),shade,night*.6));
+  for(let r=0;r<towerH;r++){const w=Math.round(wb+(wt-wb)*r/towerH); px(x-Math.floor(w/2),base-4-r,w,1,(Math.floor(r/band)%2)?red:white);}
+  const gy=base-4-towerH; px(x-Math.floor(wt/2)-1,gy,wt+2,1,'#2a2333');
+  const level=S.final?1:lit/9*.8;
+  const lampC=rgb(mix(hex('#4a4038'),hex('#ffe066'),level));
+  const ly=gy-lampH; px(x-Math.floor(wt/2),ly,wt,lampH,lampC);
+  const roof=rgb(mix(hex('#5e2430'),shade,night*.4));
+  for(let r=0;r<roofH;r++){const w=Math.max(1,wt+2-Math.round(r*(wt+1)/roofH)); px(x-Math.floor(w/2),ly-1-r,w,1,roof);}
+  LAMP={x,y:ly+lampH/2};
+  if(lit>0||S.final) glow(x,LAMP.y,Math.round(3+lit*.5+(S.final?6:0)),'#ffe27a',.35+level*.25);
+  if(S.final){
+    const a=tm*1.3, c=Math.cos(a), len=(c>0?170:60)*Math.abs(c)+8, dir=c>0?-1:1, spread=6+Math.abs(c)*8;
+    cx.globalAlpha=.22; cx.fillStyle='#fff0b0'; cx.beginPath(); cx.moveTo(x,LAMP.y); cx.lineTo(x+dir*len,LAMP.y-spread); cx.lineTo(x+dir*len,LAMP.y+spread); cx.closePath(); cx.fill(); cx.globalAlpha=1;
+  }
+}
+
+/* ---------- loop ---------- */
+const SPEED=78; let last=performance.now();
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000); last=now; tm+=dt;
+  if(S.walking){ const d=S.target-S.px, step=SPEED*dt;
+    if(reduce||Math.abs(d)<=step){ S.px=S.target; S.walking=false; const f=S.onArrive; S.onArrive=null; f&&f(); }
+    else S.px+=Math.sign(d)*step; }
+  draw(); requestAnimationFrame(loop);
+}
+
+/* ---------- music ---------- */
+// Generative seaside ambient on the Web Audio API: a slow pad in D major pentatonic, rare bell notes through delay and reverb,
+// and brown-noise waves. Nothing reacts to which answer is chosen; it only follows how far along the path you are.
+const Music=(()=>{
+  const BASE=.17;
+  const CHORDS=[[50,57,62,66],[47,54,59,62],[43,50,55,59],[45,52,57,59,64]]; // Dmaj, Bm, Gmaj, Aadd9
+  const PENTA=[62,64,66,69,71];                                                // D E F# A B
+  const hz=m=>440*Math.pow(2,(m-69)/12);
+  let ctx=null, master, padF, bells, chordI=0, chordT=null, noteT=null, running=false;
+  let on=true, dawn=0, quiet=1, soft=1, hidden=false;
+  try{ on=localStorage.getItem('lh-sound')!=='off'; }catch(e){}
+  function impulse(sec){
+    const n=Math.floor(ctx.sampleRate*sec), b=ctx.createBuffer(2,n,ctx.sampleRate);
+    for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.6);}
+    return b;
+  }
+  function build(){
+    ctx=new (window.AudioContext||window.webkitAudioContext)();
+    master=ctx.createGain(); master.gain.value=0; master.connect(ctx.destination);
+    const rev=ctx.createConvolver(); rev.buffer=impulse(2.8);
+    const revOut=ctx.createGain(); revOut.gain.value=.6; rev.connect(revOut); revOut.connect(master);
+    padF=ctx.createBiquadFilter(); padF.type='lowpass'; padF.frequency.value=800; padF.Q.value=.4;
+    const padOut=ctx.createGain(); padOut.gain.value=.55; padF.connect(padOut); padOut.connect(master); padOut.connect(rev);
+    bells=ctx.createGain(); bells.gain.value=.32;
+    const dl=ctx.createDelay(2); dl.delayTime.value=.46; const fb=ctx.createGain(); fb.gain.value=.3; const dlOut=ctx.createGain(); dlOut.gain.value=.35;
+    bells.connect(master); bells.connect(rev); bells.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(dlOut); dlOut.connect(master); dlOut.connect(rev);
+    // waves: looping brown noise, low-passed, with a slow swell
+    const n=ctx.sampleRate*6, nb=ctx.createBuffer(1,n,ctx.sampleRate), d=nb.getChannelData(0); let last=0;
+    for(let i=0;i<n;i++){last=(last+.02*(Math.random()*2-1))/1.02;d[i]=last*3.2;}
+    const sea=ctx.createBufferSource(); sea.buffer=nb; sea.loop=true;
+    const seaF=ctx.createBiquadFilter(); seaF.type='lowpass'; seaF.frequency.value=500;
+    const seaG=ctx.createGain(); seaG.gain.value=.16;
+    const lfo=ctx.createOscillator(); lfo.frequency.value=1/7.5; const lfoG=ctx.createGain(); lfoG.gain.value=.1;
+    lfo.connect(lfoG); lfoG.connect(seaG.gain); sea.connect(seaF); seaF.connect(seaG); seaG.connect(master);
+    sea.start(); lfo.start();
+  }
+  function level(){ return on&&!hidden?BASE*quiet*soft:0; }
+  function apply(sec){ if(!ctx) return; const t=ctx.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value,t); master.gain.linearRampToValueAtTime(level(),t+sec); }
+  function chord(){
+    const notes=CHORDS[chordI++%CHORDS.length], t=ctx.currentTime, dur=8+Math.random()*4;
+    notes.forEach((m,k)=>[-5,6].forEach(det=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type=k%2?'triangle':'sine'; o.frequency.value=hz(m); o.detune.value=det;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.045,t+3.5); g.gain.setValueAtTime(.045,t+dur); g.gain.linearRampToValueAtTime(0,t+dur+3.5);
+      o.connect(g); g.connect(padF); o.start(t); o.stop(t+dur+3.7);
+    }));
+    chordT=setTimeout(chord,dur*1000);
+  }
+  function bell(m,vol,when){
+    const t=when||ctx.currentTime;
+    [[1,vol],[2,vol*.25]].forEach(([mul,v])=>{const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='sine'; o.frequency.value=hz(m)*mul;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+.015); g.gain.exponentialRampToValueAtTime(.0001,t+2.6);
+      o.connect(g); g.connect(bells); o.start(t); o.stop(t+2.7);});
+  }
+  function notes(){
+    const pool=dawn>.5?PENTA.concat(PENTA.map(m=>m+12)):PENTA;
+    bell(pool[Math.floor(Math.random()*pool.length)],.09);
+    const gap=(2+Math.random()*3)*(1-dawn*.35);
+    noteT=setTimeout(notes,gap*1000);
+  }
+  function loops(runIt){
+    if(runIt&&!running){running=true;chord();noteT=setTimeout(notes,1500);}
+    if(!runIt&&running){running=false;clearTimeout(chordT);clearTimeout(noteT);}
+  }
+  return {
+    get on(){return on;},
+    // Called from the "Start walking" click: browsers only allow audio after a user gesture
+    start(){ if(!on) return; if(!ctx) build(); ctx.resume(); loops(true); apply(4); },
+    setOn(v){ on=v; try{localStorage.setItem('lh-sound',v?'on':'off');}catch(e){}
+      if(v&&S.phase!=='title'){ if(!ctx) build(); ctx.resume(); loops(true); apply(1.5); }
+      else if(ctx){ apply(.8); if(!v) setTimeout(()=>{ if(!on){loops(false);ctx.suspend();} },900); } },
+    // Dawn: the pad opens up from ~800 to ~2000 Hz as answers are given; notes get a bit more frequent and higher
+    setDawn(p){ dawn=p; if(ctx) padF.frequency.setTargetAtTime(800+1200*p,ctx.currentTime,2.5); },
+    setSoft(b){ const v=b?.75:1; if(v!==soft){ soft=v; apply(2); } },
+    final(){ if(!ctx||!on) return; const t=ctx.currentTime;
+      [62,66,69,74].forEach((m,k)=>{const o=ctx.createOscillator(), g=ctx.createGain(); o.type='sine'; o.frequency.value=hz(m);
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.05,t+1.6+k*.15); g.gain.linearRampToValueAtTime(0,t+7);
+        o.connect(g); g.connect(padF); o.start(t); o.stop(t+7.2);});
+      bell(86,.11,t+.6); },
+    setQuiet(b){ const v=b?.5:1; if(v!==quiet){ quiet=v; apply(2.5); } },
+    night(){ dawn=0; quiet=1; soft=1; if(ctx){ padF.frequency.setTargetAtTime(800,ctx.currentTime,2.5); apply(2.5); } },
+    visibility(h){ hidden=h; if(!ctx||!on) return;
+      if(h){ apply(.6); setTimeout(()=>{ if(hidden){loops(false);ctx.suspend();} },700); }
+      else{ ctx.resume(); if(S.phase!=='title') loops(true); apply(1.5); } }
+  };
+})();
+document.addEventListener('visibilitychange',()=>Music.visibility(document.hidden));
+
+/* ---------- dialog ---------- */
+const $=id=>document.getElementById(id);
+const whoEl=$('who'), lineEl=$('line'), qEl=$('q'), qP=$('qprompt'), qT=$('qtext'), chEl=$('choices'), backEl=$('back'), lightsEl=$('lights'), resEl=$('result'), overlay=$('overlay');
+let typeTimer=null, typing=false, typeFull='', typeDone=null;
+function finishType(){ clearInterval(typeTimer); lineEl.textContent=typeFull; lineEl.classList.remove('cursor'); typing=false; const f=typeDone; typeDone=null; f&&f(); }
+function typeLine(str,done){
+  clearInterval(typeTimer); typeFull=str; typeDone=done; chEl.innerHTML='';
+  if(reduce||!str){ finishType(); return; }
+  typing=true; lineEl.textContent=''; lineEl.classList.add('cursor'); let i=0;
+  typeTimer=setInterval(()=>{ i+=2; lineEl.textContent=str.slice(0,i); if(i>=str.length) finishType(); },26);
+}
+function show(o){
+  whoEl.textContent=o.who||''; whoEl.hidden=!o.who;
+  qEl.hidden=true; backEl.hidden=!o.back; backEl.textContent=L().back;
+  typeLine(o.text||'',()=>{
+    if(o.q){ qP.textContent=o.q.prompt||''; qP.hidden=!o.q.prompt; qT.textContent=o.q.text; qEl.hidden=false; }
+    const cs=o.choices||[]; chEl.className='choices'+(cs.length===1?' solo':'');
+    chEl.innerHTML='';
+    cs.forEach((c,k)=>{ const b=document.createElement('button'); b.type='button'; b.className='choice'+(c.sel?' sel':'');
+      b.innerHTML=`<span class="key">${k+1}</span><span></span>`; b.lastChild.textContent=c.label; b.addEventListener('click',e=>{e.stopPropagation();c.act();}); chEl.appendChild(b); });
+  });
+  renderLights();
+  const n=S.ans.slice(0,9).filter(v=>v!=null).length;
+  Music.setDawn(S.final?1:n/9);
+  Music.setSoft(S.phase==='ask'&&S.idx===8);
+}
+function renderLights(){
+  const n=S.ans.slice(0,9).filter(v=>v!=null).length;
+  lightsEl.innerHTML=`<span>${L().lights}</span>`+Array.from({length:9},(_,i)=>`<b class="${S.ans[i]!=null?'on':''}"></b>`).join('');
+  lightsEl.setAttribute('aria-label',`${n}/9`);
+}
+$('dlg').addEventListener('click',()=>{ if(typing) finishType(); });
+
+function goTitle(){ S.phase='title'; overlay.hidden=false; show({text:L().titleLine,choices:[{label:L().start,act:goIntro}]}); }
+function goIntro(){ Music.start(); S.phase='intro'; overlay.hidden=true; show({who:L().keeper,text:L().intro,choices:[{label:L().go,act:()=>walkTo(0)}]}); }
+function walkTo(i){
+  S.idx=i; S.phase='walk'; overlay.hidden=true;
+  show({text:L().walking[i%L().walking.length]});
+  S.target=stopX(i); S.walking=true;
+  S.onArrive=()=>{ if(i<9) ask(i); else if(score()>0) ask10(); else goEnd(); };
+}
+function ask(i){
+  S.phase='ask'; S.idx=i; const t=L();
+  show({who:t.guides[i],text:t.intros[i],q:{prompt:t.prompt,text:t.items[i]},back:i>0,
+    choices:t.answers.map((a,v)=>({label:a,sel:S.ans[i]===v,act:()=>{S.ans[i]=v; walkTo(i<8?i+1:9);}}))});
+}
+function ask10(){
+  S.phase='ask10'; S.idx=9; const t=L();
+  show({who:t.keeper,text:t.intro10,q:{prompt:'',text:t.q10},back:true,
+    choices:t.a10.map((a,v)=>({label:a,sel:S.ans[9]===v,act:()=>{S.ans[9]=v; goEnd();}}))});
+}
+function goEnd(){
+  if(score()===0) S.ans[9]=null;
+  if(!S.final) Music.final();
+  S.final=true; S.phase='end'; S.idx=9;
+  show({who:L().keeper,text:L().endLine,choices:[{label:L().seeResult,act:()=>showResult(true)}]});
+}
+function showResult(scroll){
+  S.phase='result'; Music.setQuiet(true); renderResult(); resEl.hidden=false;
+  show({who:L().keeper,text:L().resultHint,choices:[{label:L().again,act:restart}]});
+  if(scroll) setTimeout(()=>resEl.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'}),60);
+}
+function restart(){ Music.night(); S.ans=Array(10).fill(null); S.px=46; S.target=46; S.walking=false; S.final=false; resEl.hidden=true; resEl.innerHTML=''; window.scrollTo(0,0); goIntro(); }
+backEl.addEventListener('click',e=>{ e.stopPropagation();
+  if(S.phase==='ask'&&S.idx>0){ S.px=stopX(S.idx-1); ask(S.idx-1); }
+  else if(S.phase==='ask10'){ S.px=stopX(8); ask(8); } });
+
+document.addEventListener('keydown',e=>{
+  if(e.target.closest&&e.target.closest('textarea,input')) return;
+  const n=parseInt(e.key,10);
+  if(n>=1&&n<=4){ if(typing){finishType();} const b=chEl.children[n-1]; if(b){e.preventDefault(); b.click();} }
+  else if(e.key==='Enter'||e.key===' '){ if(document.activeElement&&document.activeElement.tagName==='BUTTON') return; if(typing){e.preventDefault();finishType();} else if(chEl.children.length===1){e.preventDefault();chEl.children[0].click();} }
+});
+
+/* ---------- results ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function shareLinks(text){ const e=encodeURIComponent(text); return {tg:`https://t.me/share/url?url=${e}`,wa:`https://wa.me/?text=${e}`}; }
+function famText(){ const t=L(), s=score(); return S.incScore?t.msgScore(s,t.levels[levelOf(s)]):t.msgPlain; }
+function renderResult(){
+  const t=L(), s=score(), lv=levelOf(s), q9=S.ans[8]||0;
+  const date=new Date().toLocaleDateString(lang==='ru'?'ru-RU':'en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const segs=[5,5,5,5,8], labels=['0–4','5–9','10–14','15–19','20–27'];
+  let h='';
+  if(q9>0||lv===4){
+    h+=`<section class="panel crisis"><h3>${esc(t.crisisTitle)}</h3><p>${esc(q9>0?t.crisis9:t.crisisHigh)}</p><ul>`+
+      t.lines.map(l=>`<li><span>${esc(l[0])}: <span class="num">${esc(l[1])}</span></span></li>`).join('')+
+      `<li><span>${esc(t.otherCountries)} <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a></span></li></ul>`+
+      `<p>${esc(t.sos)}</p><textarea id="sos-msg" aria-label="${esc(t.sos)}">${esc(t.sosMsg)}</textarea>`+
+      `<div class="row"><button class="btn primary" type="button" data-copy="sos-msg">${esc(t.copy)}</button>`+
+      `<a class="btn" id="sos-tg" target="_blank" rel="noopener">Telegram</a><a class="btn" id="sos-wa" target="_blank" rel="noopener">WhatsApp</a></div></section>`;
+  }
+  h+=`<article class="card" aria-label="${esc(t.resTitle)}"><div class="eyebrow"><span>PHQ-9</span><span>${esc(date)}</span></div>`+
+    `<h2>${esc(t.resTitle)}</h2><div class="score"><b>${s}</b><span>${esc(t.of)}</span></div>`+
+    `<div class="scale">`+segs.map((w,i)=>`<span style="flex:${w};background:${LEVEL_COLORS[i]}"></span>`).join('')+`<i class="mark" style="left:${((s+.5)/28*100).toFixed(2)}%"></i></div>`+
+    `<div class="scale-l">`+segs.map((w,i)=>`<span style="flex:${w}">${labels[i]}</span>`).join('')+`</div>`+
+    `<p class="level"><i style="background:${LEVEL_COLORS[lv]}"></i>${esc(t.levels[lv])}</p><p>${esc(t.desc[lv])}</p>`+
+    (S.ans[9]!=null?`<p class="diff">${esc(t.diff)} ${esc(t.a10[S.ans[9]].toLowerCase())}</p>`:'')+`</article>`+
+    `<p class="shot">${esc(t.shot)}</p>`;
+  h+=`<section class="panel"><h3>${esc(t.tipsTitle)}</h3><ul>`+t.tips[lv].map(x=>`<li><span>${esc(x)}</span></li>`).join('')+`</ul></section>`;
+  h+=`<section class="panel"><h3>${esc(t.shareTitle)}</h3><p>${esc(t.shareNote)}</p>`+
+    `<label class="check"><input type="checkbox" id="inc-score" ${S.incScore?'checked':''}> ${esc(t.incScore)}</label>`+
+    `<textarea id="fam-msg" aria-label="${esc(t.shareTitle)}">${esc(famText())}</textarea>`+
+    `<div class="row"><button class="btn primary" type="button" data-copy="fam-msg">${esc(t.copy)}</button>`+
+    `<a class="btn" id="fam-tg" target="_blank" rel="noopener">Telegram</a><a class="btn" id="fam-wa" target="_blank" rel="noopener">WhatsApp</a></div></section>`;
+  h+=`<section class="panel"><h3>${esc(t.inviteTitle)}</h3><p>${esc(t.inviteNote)}</p>`+
+    `<textarea id="inv-msg" aria-label="${esc(t.inviteTitle)}">${esc(t.invite(INVITE_URL))}</textarea>`+
+    `<div class="row"><button class="btn primary" type="button" data-copy="inv-msg">${esc(t.copy)}</button>`+
+    `<a class="btn" id="inv-tg" target="_blank" rel="noopener">Telegram</a><a class="btn" id="inv-wa" target="_blank" rel="noopener">WhatsApp</a></div></section>`;
+  h+=`<p class="about">${esc(t.about)}</p>`;
+  resEl.innerHTML=h;
+  ['sos','fam','inv'].forEach(k=>{ const ta=$(k+'-msg'); if(!ta) return; const upd=()=>{const l=shareLinks(ta.value); $(k+'-tg').href=l.tg; $(k+'-wa').href=l.wa;}; ta.addEventListener('input',upd); upd(); });
+  const inc=$('inc-score'); inc.addEventListener('change',()=>{ S.incScore=inc.checked; const ta=$('fam-msg'); ta.value=famText(); ta.dispatchEvent(new Event('input')); });
+  resEl.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',()=>{
+    const ta=$(b.dataset.copy), orig=t.copy;
+    const ok=()=>{b.textContent=t.copied; setTimeout(()=>b.textContent=orig,1600);};
+    const fail=()=>{ta.focus(); ta.select(); b.textContent=t.selected; setTimeout(()=>b.textContent=orig,2400);};
+    try{ navigator.clipboard.writeText(ta.value).then(ok,fail); }catch(e){ fail(); }
+  }));
+}
+
+/* ---------- language ---------- */
+function applyStatic(){
+  document.documentElement.lang=lang;
+  document.querySelectorAll('[data-t]').forEach(el=>el.textContent=L()[el.dataset.t]);
+  $('privacy').textContent=L().privacy; cv.setAttribute('aria-label',L().canvas);
+  $('lang-ru').setAttribute('aria-pressed',lang==='ru'); $('lang-en').setAttribute('aria-pressed',lang==='en');
+  renderSound();
+}
+// Speaker icon drawn from square "pixels"; waves only when the sound is on
+function renderSound(){
+  const b=$('snd'), v=Music.on;
+  b.setAttribute('aria-pressed',v); b.setAttribute('aria-label',v?L().soundOn:L().soundOff); b.title=b.getAttribute('aria-label');
+  b.innerHTML=`<svg viewBox="0 0 10 10" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true"><rect x="1" y="4" width="2" height="2"/><rect x="3" y="3" width="1" height="4"/><rect x="4" y="2" width="1" height="6"/>${v?'<rect x="6" y="4" width="1" height="2"/><rect x="7" y="2" width="1" height="1"/><rect x="8" y="3" width="1" height="4"/><rect x="7" y="7" width="1" height="1"/>':'<rect x="6" y="3" width="1" height="1"/><rect x="7" y="4" width="1" height="2"/><rect x="8" y="3" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/>'}</svg>`;
+}
+$('snd').addEventListener('click',()=>{ Music.setOn(!Music.on); renderSound(); });
+function setLang(l){
+  if(l===lang) return; lang=l; try{localStorage.setItem('lh-lang',l);}catch(e){}
+  applyStatic();
+  ({title:goTitle,intro:goIntro,ask:()=>ask(S.idx),ask10:ask10,end:goEnd,result:()=>showResult(false),
+    walk:()=>show({text:L().walking[S.idx%L().walking.length]})}[S.phase]||goTitle)();
+}
+$('lang-ru').addEventListener('click',()=>setLang('ru'));
+$('lang-en').addEventListener('click',()=>setLang('en'));
+
+applyStatic(); goTitle(); requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>
