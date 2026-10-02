@@ -249,15 +249,21 @@ const ITEMS=[
  {id:'gym',tab:'e',t:'p',name:T('Спортзал','Gym'),desc:T('+0.5 энергии/с, запас энергии медленнее падает с возрастом.','+0.5 energy/s, max energy shrinks slower with age.'),price:600,upkeep:1500,regen:.5},
  {id:'therapy',tab:'e',t:'p',name:T('Психотерапевт','Therapist'),desc:T('Усталость −15%, выгорание копится вдвое медленнее.','Fatigue −15%, burnout builds half as fast.'),price:300,upkeep:3600,drain:.85},
  {id:'dog',tab:'e',t:'p',name:T('Собака','Dog'),desc:T('+0.6 энергии/с. Гуляешь дважды в день, хочешь ты или нет.','+0.6 energy/s. Two walks a day, like it or not.'),price:2000,upkeep:2400,regen:.6},
- {id:'kbd',tab:'w',t:'p',name:T('Механическая клавиатура','Mechanical keyboard'),desc:T('Доход с клика ×1.2. Соседи по опенспейсу против.','Click income ×1.2. Your open-space neighbors object.'),price:300,click:1.2},
- {id:'mon2',tab:'w',t:'p',name:T('Второй монитор','Second monitor'),desc:T('Доход с клика ×1.3.','Click income ×1.3.'),price:1200,click:1.3},
- {id:'course',tab:'w',t:'p',name:T('Курсы и конференции','Courses and conferences'),desc:T('Опыт ×1.5. Быстрее до повышения.','XP ×1.5. Faster promotions.'),price:2500,xp:1.5},
- {id:'copilot',tab:'w',t:'p',name:T('AI-копилот','AI copilot'),desc:T('Доход с клика ×1.5, опыт ×1.3. Компания тоже заметит, что людей можно меньше.','Click income ×1.5, XP ×1.3. The company will also notice it needs fewer people.'),price:400,upkeep:240,click:1.5,xp:1.3},
- {id:'mon3',tab:'w',t:'p',name:T('Третий монитор','Third monitor'),desc:T('Доход с клика ×1.3. Шея против.','Click income ×1.3. Your neck objects.'),price:5000,click:1.3,req:'mon2'},
- {id:'mentor',tab:'w',t:'p',name:T('Ментор','Mentor'),desc:T('+0.25 опыта/с, даже когда не кликаешь. Раз в неделю созвон и честный фидбек.','+0.25 XP/s even when you are not clicking. A weekly call and honest feedback.'),price:800,upkeep:3000,pxp:.25},
- {id:'backtoit',tab:'w',t:'a',show:()=>S.barista,name:T('Вернуться в IT','Go back to tech'),desc:()=>T(`Бывшие коллеги зовут обратно. Навыки подзабылись: вернёшься на грейд ${GR[Math.max(0,S.grade-1)].n}, зато снова растут зарплата и повышения.`,`Former colleagues want you back. Your skills got rusty: you return as ${GR[Math.max(0,S.grade-1)].n}, but salary and promotions grow again.`),label:T('Вернуться','Go back'),ok:()=>S.barista,buy(){backToIT();}},
- {id:'hard',tab:'w',t:'t',name:T('Брать задачи посложнее','Take harder tasks'),desc:T('Пассивный опыт ×2, но усталость ×1.3.','Passive XP ×2, but fatigue ×1.3.')},
- {id:'freelance',tab:'w',t:'t',name:T('Фриланс по вечерам','Evening freelance'),desc:T('Зарплата +30%, усталость ×1.25.','Salary +30%, fatigue ×1.25.')},
+ {id:'kbd',tab:'w',job:'it',t:'p',name:T('Механическая клавиатура','Mechanical keyboard'),desc:T('Доход с клика ×1.2. Соседи по опенспейсу против.','Click income ×1.2. Your open-space neighbors object.'),price:300,click:1.2},
+ {id:'mon2',tab:'w',job:'it',t:'p',name:T('Второй монитор','Second monitor'),desc:T('Доход с клика ×1.3.','Click income ×1.3.'),price:1200,click:1.3},
+ {id:'course',tab:'w',job:'it',t:'p',name:T('Курсы и конференции','Courses and conferences'),desc:T('Опыт ×1.5. Быстрее до повышения.','XP ×1.5. Faster promotions.'),price:2500,xp:1.5},
+ {id:'copilot',tab:'w',job:'it',t:'p',name:T('AI-копилот','AI copilot'),desc:T('Доход с клика ×1.5, опыт ×1.3. Компания тоже заметит, что людей можно меньше.','Click income ×1.5, XP ×1.3. The company will also notice it needs fewer people.'),price:400,upkeep:240,click:1.5,xp:1.3},
+ {id:'mon3',tab:'w',job:'it',t:'p',name:T('Третий монитор','Third monitor'),desc:T('Доход с клика ×1.3. Шея против.','Click income ×1.3. Your neck objects.'),price:5000,click:1.3,req:'mon2'},
+ {id:'mentor',tab:'w',job:'it',t:'p',name:T('Ментор','Mentor'),desc:T('+0.25 опыта/с, даже когда не кликаешь. Раз в неделю созвон и честный фидбек.','+0.25 XP/s even when you are not clicking. A weekly call and honest feedback.'),price:800,upkeep:3000,pxp:.25},
+ {id:'backtoit',tab:'w',job:'cafe',t:'a',name:T('Вернуться в IT','Go back to tech'),desc:()=>T(`Бывшие коллеги зовут обратно. Навыки подзабылись: вернёшься на грейд ${GR[Math.max(0,S.grade-1)].n}, зато снова растут зарплата и повышения.`,`Former colleagues want you back. Your skills got rusty: you return as ${GR[Math.max(0,S.grade-1)].n}, but salary and promotions grow again.`),label:T('Вернуться','Go back'),ok:()=>S.barista,buy(){backToIT();}},
+ {id:'grinder',tab:'w',job:'cafe',t:'p',name:T('Профессиональная кофемолка','Pro coffee grinder'),desc:T('Доход с чашки ×1.3. Помол ровный, как твой новый пульс.','Income per cup ×1.3. A grind as even as your new pulse.'),price:400,click:1.3},
+ {id:'latte',tab:'w',job:'cafe',t:'p',name:T('Курс латте-арта','Latte art course'),desc:T('Доход с чашки ×1.3: за сердечки на пенке оставляют чаевые.','Income per cup ×1.3: hearts in the foam earn tips.'),price:900,click:1.3},
+ {id:'machine2',tab:'w',job:'cafe',t:'p',name:T('Итальянская кофемашина','Italian espresso machine'),desc:T('Доход с чашки ×1.5. Красная, блестит, соседи завидуют.','Income per cup ×1.5. Red, shiny, the neighbors are jealous.'),price:4000,click:1.5,req:'grinder'},
+ {id:'shoes',tab:'w',job:'cafe',t:'p',name:T('Удобная обувь','Comfy shoes'),desc:T('Усталость −10%. Восемь часов на ногах.','Fatigue −10%. Eight hours on your feet.'),price:250,drain:.9},
+ {id:'smile',tab:'w',job:'cafe',t:'t',name:T('Улыбаться каждому','Smile at everyone'),desc:T('Доход с чашки ×1.25 за счёт чаевых, но усталость ×1.15.','Income per cup ×1.25 from tips, but fatigue ×1.15.')},
+ {id:'weekend',tab:'w',job:'cafe',t:'t',name:T('Смены по выходным','Weekend shifts'),desc:T('Зарплата +30%, усталость ×1.25.','Salary +30%, fatigue ×1.25.')},
+ {id:'hard',tab:'w',job:'it',t:'t',name:T('Брать задачи посложнее','Take harder tasks'),desc:T('Пассивный опыт ×2, но усталость ×1.3.','Passive XP ×2, but fatigue ×1.3.')},
+ {id:'freelance',tab:'w',job:'it',t:'t',name:T('Фриланс по вечерам','Evening freelance'),desc:T('Зарплата +30%, усталость ×1.25.','Salary +30%, fatigue ×1.25.')},
  {id:'invest',tab:'m',t:'a',name:T('Вложить весь кэш в ETF','Put all cash in ETFs'),desc:()=>T(`Индекс растёт примерно на 7% в год, но иногда падает. Сейчас: ${fmt(S.etf)}.`,`The index grows about 7% a year, but sometimes crashes. Now: ${fmt(S.etf)}.`),label:T('Вложить','Invest'),ok:()=>S.cash>=50,buy(){S.etf+=S.cash;S.yearInv+=S.cash;log('sys',T(`Вложил ${fmt(S.cash)} в ETF.`,`Invested ${fmt(S.cash)} in ETFs.`));S.cash=0;}},
  {id:'sell',tab:'m',t:'a',name:T('Продать 25% ETF','Sell 25% of ETFs'),desc:T('Если не хватает кэша на покупки.','When you need cash for purchases.'),label:T('Продать','Sell'),ok:()=>S.etf>=50,buy(){const v=S.etf*.25;S.etf-=v;S.cash+=v;}},
  {id:'bonds',tab:'m',t:'a',name:T('Облигации на весь кэш','Put all cash in bonds'),desc:()=>T(`~3.5% в год, обвалы им не страшны. Сейчас: ${fmt(S.bonds)}.`,`~3.5% a year, crashes do not touch them. Now: ${fmt(S.bonds)}.`),label:T('Купить','Buy'),ok:()=>S.cash>=50,buy(){S.bonds+=S.cash;S.yearInv+=S.cash;S.cash=0;}},
@@ -274,7 +280,7 @@ const ITEMS=[
 ];
 const SECTIONS=[
  {k:'e',t:T('Энергия','Energy'),note:T('Тратится на каждый клик и понемногу сама. С грейдом и возрастом быстрее.','Spent on every click and slowly by itself. Faster with each grade and with age.')},
- {k:'w',t:T('Работа','Work'),note:T('Больше денег и опыта с каждого клика.','More money and XP per click.')},
+ {k:'w',t:T('Работа','Work'),note:()=>S.barista?T('Больше выручки и чаевых с каждой чашки. Офисные вещи ждут на складе.','More revenue and tips per cup. Your office gear waits in storage.'):T('Больше денег и опыта с каждого клика.','More money and XP per click.')},
  {k:'m',t:T('Деньги','Money'),note:T('Деньги, которые работают, пока работаешь ты. Вложения дают налоговый вычет 13% в день рождения.','Money that works while you do. Investments earn a 13% tax refund on your birthday.')},
  {k:'l',t:T('Жизнь','Life'),note:T('Каждые $1k расходов в год добавляют $25k к цели FIRE.','Every $1k of yearly expenses adds $25k to the FIRE goal.')}
 ];
@@ -347,6 +353,11 @@ const REACT={
  car:[['@devops_ivan: подвезёшь до дата-центра?','@devops_ivan: can you drive me to the data center?']],
  bali:[['@manager: созвон в 9 утра по Москве, у тебя это сколько?','@manager: call at 9 a.m. our time, what time is that for you?']],
  penthouse:[['@ceo: зайди ко мне, обсудим твою «вовлечённость»','@ceo: drop by, let us discuss your "engagement"']],
+ grinder:[['@owner: о, теперь хоть зерно не как песок','@owner: finally the grind is not sand']],
+ latte:[['@regular_anna: это лебедь? мне кажется, лебедь','@regular_anna: is that a swan? I think it is a swan']],
+ machine2:[['@owner: только не трогай настройки давления','@owner: just do not touch the pressure settings']],
+ smile:[['@customer: вы сегодня какой-то подозрительно добрый','@customer: you are suspiciously nice today']],
+ weekend:[['@owner: в субботу открываемся в 7, не проспи','@owner: Saturday we open at 7, do not oversleep']],
  vac:[['@olga_pm: ты же будешь на связи? ну так, иногда','@olga_pm: you will be reachable though? just sometimes']]
 };
 const SAVE='car_save_v1', LEG='car_legacy_v1', META_K='car_meta_v1';
@@ -360,7 +371,7 @@ function legacy(){return store.get(LEG)||{gen:1,cash:0,best:null};}
 const meta=Object.assign({endings:{},ach:{},tut:false},store.get(META_K)||{});
 const saveMeta=()=>store.set(META_K,meta);
 
-function fresh(){const L=legacy();return{gen:L.gen,age:22,cash:500+L.cash,etf:0,bonds:0,crypto:0,cryptoIn:0,yearInv:0,grade:0,xp:0,energy:100,burn:0,burnHit:false,salaryMult:1,owned:{},pet:0,freelance:false,hard:false,auto:false,calm:false,declined:0,coffeeTol:1,coffeeShow:0,coffees:0,vacations:0,buffs:{},startup:null,unicorn:false,startupDone:false,unemployedUntil:0,vacReady:22,eventT:30,pingT:3,clicks:0,lastEvent:'',trait:null,married:false,kids:0,mortgage:false,marathon:false,barista:false,done:{},over:false,started:false,paused:false,log:[]};}
+function fresh(){const L=legacy();return{gen:L.gen,age:22,cash:500+L.cash,etf:0,bonds:0,crypto:0,cryptoIn:0,yearInv:0,grade:0,xp:0,energy:100,burn:0,burnHit:false,salaryMult:1,owned:{},pet:0,freelance:false,hard:false,smile:false,weekend:false,auto:false,calm:false,declined:0,coffeeTol:1,coffeeShow:0,coffees:0,vacations:0,buffs:{},startup:null,unicorn:false,startupDone:false,unemployedUntil:0,vacReady:22,eventT:30,pingT:3,clicks:0,lastEvent:'',trait:null,married:false,kids:0,mortgage:false,marathon:false,barista:false,done:{},over:false,started:false,paused:false,log:[]};}
 
 /* ---------- randomness ---------- */
 const rnd=Math.random;
@@ -369,11 +380,14 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 /* ---------- economy ---------- */
 const has=id=>!!S.owned[id];
 const trait=id=>S.trait===id;
-const owned=()=>ITEMS.filter(i=>i.t==='p'&&has(i.id));
+const job=()=>S.barista?'cafe':'it';
+const forJob=i=>!i.job||i.job===job();
+// Items of the other profession sit in storage: no bonus and no upkeep until you switch back
+const owned=()=>ITEMS.filter(i=>i.t==='p'&&has(i.id)&&forJob(i));
 const prod=(k,d=1)=>owned().reduce((a,i)=>a*(i[k]??1),d);
 const petInc=l=>l?1500*(Math.pow(2,l)-1):0;
 function gradeName(){return S.barista?T('Бариста','Barista'):GR[S.grade].n;}
-function baseSalary(){let s=(S.barista?BARISTA_PAY:GR[S.grade].sal)*S.salaryMult;if(S.freelance)s*=1.3;if(S.startup)s*=.6;if(trait('prodigy'))s*=.9;if(trait('networker'))s*=1.15;return s;}
+function baseSalary(){let s=(S.barista?BARISTA_PAY:GR[S.grade].sal)*S.salaryMult;if(S.freelance||S.weekend)s*=1.3;if(S.startup)s*=.6;if(trait('prodigy'))s*=.9;if(trait('networker'))s*=1.15;return s;}
 function salary(){if(S.age<S.unemployedUntil)return 0;let s=baseSalary();if(S.buffs.crunch)s*=2;return s;}
 function baseExp(g=S.grade){return 12000*(1+.25*g)*(trait('frugal')?.85:1);}
 function expenses(){return baseExp()+owned().reduce((a,i)=>a+(i.upkeep||0),0)+(S.married?3000:0)+S.kids*8000-(S.mortgage?4000:0);}
@@ -391,14 +405,14 @@ const ageTire=()=>1+Math.max(0,S.age-40)*.025;
 // Passive fatigue: the hero slowly tires just by going to work
 function drain(){
   let d=(S.barista?.25:.4*Math.pow(1.3,S.grade))*ageTire()*prod('drain');
-  if(S.freelance)d*=1.25;if(S.hard)d*=1.3;if(S.buffs.crunch)d*=2.5;if(S.buffs.crash)d*=1.8;
+  if(S.freelance||S.weekend)d*=1.25;if(S.hard)d*=1.3;if(S.smile)d*=1.15;if(S.buffs.crunch)d*=2.5;if(S.buffs.crash)d*=1.8;
   if(S.married)d*=.92;d*=Math.pow(1.08,S.kids);if(S.marathon)d*=.9;
   if(trait('workaholic'))d*=1.2;if(trait('zen'))d*=.8;
   return d+S.pet*.08;
 }
 // Active work: each click converts energy into money and XP
 function clickCost(){let c=.8*ageTire()*prod('drain');if(trait('workaholic'))c*=.75;if(S.buffs.crunch)c*=1.5;if(S.buffs.crash)c*=1.5;return c;}
-function clickGain(){return S.age<S.unemployedUntil?0:baseSalary()/YEAR*.2*clickMult()*(S.buffs.crunch?2:1)*burnMult()*(trait('zen')?.85:1);}
+function clickGain(){return S.age<S.unemployedUntil?0:baseSalary()/YEAR*.2*clickMult()*(S.smile?1.25:1)*(S.buffs.crunch?2:1)*burnMult()*(trait('zen')?.85:1);}
 function need(){return GR[S.grade].xp;}
 function addE(v){S.energy=Math.min(maxE(),S.energy+v);}
 function earn(g){if(S.auto){S.cash+=g*.5;S.etf+=g*.5;S.yearInv+=g*.5;}else S.cash+=g;}
@@ -534,7 +548,7 @@ function promo(){
     {l:T('Отказаться и остаться на месте','Decline and stay where you are'),f(){track('promotion',{to:nx.n,accepted:false});S.xp=need()*.4;S.declined++;log('sys',T('Ты отказался от повышения. Менеджер удивлён.','You declined the promotion. Your manager is surprised.'));}}
   ]);
 }
-function backToIT(){S.barista=false;S.grade=Math.max(0,S.grade-1);S.xp=0;resetCode();track('career_change',{to:'it',grade:GR[S.grade].n});log('good',T(`Снова в IT, теперь ${GR[S.grade].n}. Ноутбук тот же, пароль от VPN — нет.`,`Back in tech as ${GR[S.grade].n}. Same laptop, new VPN password.`));log('ping',T('@olga_pm: о, ты вернулся! есть 5 минут?','@olga_pm: oh, you are back! got 5 minutes?'));}
+function backToIT(){S.barista=false;S.smile=false;S.weekend=false;S.grade=Math.max(0,S.grade-1);S.xp=0;resetCode();track('career_change',{to:'it',grade:GR[S.grade].n});log('good',T(`Снова в IT, теперь ${GR[S.grade].n}. Ноутбук тот же, пароль от VPN — нет.`,`Back in tech as ${GR[S.grade].n}. Same laptop, new VPN password.`));log('ping',T('@olga_pm: о, ты вернулся! есть 5 минут?','@olga_pm: oh, you are back! got 5 minutes?'));}
 function becomeBarista(){S.barista=true;S.burn=0;S.freelance=false;S.hard=false;S.startup=null;track('career_change',{to:'barista'});log('good',T('Ты теперь бариста. Вместо Jira — очередь за капучино.','You are a barista now. A cappuccino queue instead of Jira.'));log('ping',T('@olga_pm: а можно тебе ещё одну маленькую фичу? …ой','@olga_pm: could you take one tiny feature? …oh'));}
 function burnoutEvent(){
   S.burnHit=true;unlock('burnout');track('burnout');
@@ -755,7 +769,7 @@ function renderHUD(){
 let shopStruct='', shopRows={};
 const setText=(el,t)=>{if(el.textContent!==t)el.textContent=t;};
 function renderShop(force){
-  const vis=ITEMS.filter(i=>(!i.req||has(i.req))&&(!i.show||i.show()));
+  const vis=ITEMS.filter(i=>(!i.req||has(i.req))&&forJob(i));
   const struct=vis.map(i=>i.id).join(',');
   if(force||struct!==shopStruct){shopStruct=struct;buildShop(vis);}
   for(const it of vis)updateRow(it);
@@ -765,7 +779,7 @@ function buildShop(vis){
   const secs=document.createElement('div');secs.className='secs';
   for(const s of SECTIONS){
     const sec=document.createElement('section');sec.className='sec';
-    sec.innerHTML='<h3></h3><p class="note"></p>';sec.querySelector('h3').textContent=s.t;sec.querySelector('.note').textContent=s.note;
+    sec.innerHTML='<h3></h3><p class="note"></p>';sec.querySelector('h3').textContent=s.t;sec.querySelector('.note').textContent=typeof s.note==='function'?s.note():s.note;
     for(const it of vis.filter(i=>i.tab===s.k)){
       const row=document.createElement('div');row.className='item';
       const u=it.upkeep?T(`+${fmt(it.upkeep)}/год к расходам · +${fmt(it.upkeep*25)} к цели FIRE`,`+${fmt(it.upkeep)}/yr expenses · +${fmt(it.upkeep*25)} to FIRE goal`):'';
@@ -785,7 +799,7 @@ function updateRow(it){
   setText(r.d,typeof it.desc==='function'?it.desc():it.desc);
   let t,dis=false;
   if(it.t==='p'){t=has(it.id)?T('ЕСТЬ','OWNED'):(p?fmt(p):'FREE');dis=has(it.id)||!canBuy(it);}
-  else if(it.t==='t'){t=S[it.id]?T('ВКЛ','ON'):T('ВЫКЛ','OFF');dis=!S.started||S.over||(S.barista&&(it.id==='hard'||it.id==='freelance'));}
+  else if(it.t==='t'){t=S[it.id]?T('ВКЛ','ON'):T('ВЫКЛ','OFF');dis=!S.started||S.over;}
   else if(it.t==='a'){t=it.label.toUpperCase();dis=!canBuy(it);}
   else{t=(it.ok&&!it.ok())?'—':fmt(p);dis=!canBuy(it);}
   setText(b,t);b.disabled=dis;b.classList.toggle('on',it.t==='t'&&!!S[it.id]);
@@ -963,7 +977,9 @@ function drawCafe(t){
   R(101,42,4,3,skin);
   drawHead(97,31+(S.energy/maxE()<.15?2:0),t);
   // espresso machine
-  R(126,38,30,28,'#9aa0b4');R(126,38,30,2,'#c8ccd8');R(128,41,26,6,'#3b3b52');R(130,43,4,2,'#7ee0a1');R(136,43,10,1,'#7cc4ff');
+  const body=has('machine2')?'#c0392b':'#9aa0b4';
+  if(has('grinder')){R(117,40,7,5,'#7a4a2a');R(118,45,5,14,'#3b3b52');R(117,59,7,7,'#2b2b2b');}
+  R(126,38,30,28,body);R(126,38,30,2,'#c8ccd8');if(has('machine2'))R(126,64,30,2,'#c8ccd8');R(128,41,26,6,'#3b3b52');R(130,43,4,2,'#7ee0a1');R(136,43,10,1,'#7cc4ff');
   R(133,49,8,4,'#3b3b52');R(146,50,5,5,'#efeaff');R(147,51,3,3,'#c0392b');R(153,49,1,12,'#777');R(129,63,24,2,'#555');
   // arms: idle on the counter, or reaching to the machine with a cup while brewing
   if(brewing){
@@ -975,7 +991,7 @@ function drawCafe(t){
   }else{
     R(104,50,12,3,shirt);R(112,52,3,12,shirt);R(112,64,3,2,skin);
     R(92,52,4,12,shirt);R(92,64,3,2,skin);
-    if(S.clicks>0){R(134,58,5,6,'#efeaff');R(139,59,2,3,'#efeaff');R(135,58,3,1,'#5a3b24');}
+    if(S.clicks>0){R(134,58,5,6,'#efeaff');R(139,59,2,3,'#efeaff');R(135,58,3,1,has('latte')?'#c99a6a':'#5a3b24');if(has('latte'))R(136,58,1,1,'#efeaff');}
   }
   // counter, pastry case, ready cups
   R(70,66,122,4,'#8a5a3c');R(70,70,122,22,'#6b4430');for(let i=0;i<12;i++)R(74+i*10,70,1,22,'#5a3b24');
