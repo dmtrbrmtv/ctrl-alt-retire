@@ -1,0 +1,515 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ctrl+Alt+Retire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: night open-space. Pixel office scene + HUD on the left, the "control desk" (shop, Slack) on the right; stacks on phones */
+:root{
+  --bg:#15122b; --panel:#201c40; --panel2:#2a2552; --line:#403a76;
+  --fg:#efeaff; --muted:#a69fd8;
+  --amber:#ffb84d; --money:#7ee0a1; --energy:#ff5d7a; --warn:#ffd23f; --xp:#7cc4ff;
+  --display:'Press Start 2P', ui-monospace, monospace;
+  --body:'Pixelify Sans', ui-monospace, 'Courier New', monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--body);font-size:16px;line-height:1.35;padding-inline:16px;padding-block:16px 28px}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+button{font-family:inherit;color:inherit;cursor:pointer}
+button:focus-visible,#stage:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}}
+header.top{max-width:1180px;margin:0 auto 14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-spacing:.02em;color:var(--amber);text-shadow:3px 3px 0 #000}
+.tools{display:flex;gap:8px}
+.tbtn{background:var(--panel);border:2px solid var(--line);padding:6px 10px;font-size:14px}
+.tbtn:hover{border-color:var(--amber)}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.hud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.hud{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--panel);border:2px solid var(--line);padding:8px 10px;min-width:0}
+.stat .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat .v{font-family:var(--display);font-size:13px;margin-top:6px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v.money{color:var(--money)}
+#stageWrap{position:relative;border:3px solid #000;box-shadow:0 0 0 2px var(--line),6px 6px 0 #000;background:#000;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#stage{display:block;width:100%;height:auto;aspect-ratio:192/120;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;max-width:100%}
+#vign{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 0 var(--energy);transition:box-shadow .3s}
+.tapHint{position:absolute;left:8px;bottom:8px;font-family:var(--display);font-size:9px;color:var(--fg);background:rgba(0,0,0,.55);padding:6px 8px;pointer-events:none}
+.float{position:absolute;font-family:var(--display);font-size:11px;color:var(--money);text-shadow:2px 2px 0 #000;pointer-events:none;animation:up .9s ease-out forwards;white-space:nowrap}
+.float.xp{color:var(--xp);font-size:9px}
+@keyframes up{to{transform:translateY(-46px);opacity:0}}
+.bars{display:flex;flex-direction:column;gap:10px;background:var(--panel);border:2px solid var(--line);padding:10px 12px}
+.barRow{display:grid;grid-template-columns:88px minmax(0,1fr) auto;gap:10px;align-items:center}
+.barRow .lbl{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.barRow .num{font-family:var(--display);font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:16px;background:#0e0c20;border:2px solid #000;position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;display:block;background:var(--c);width:0;transition:width .15s linear}
+.bar i::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 6px,rgba(0,0,0,.25) 6px 8px)}
+.bar .cap{position:absolute;top:0;bottom:0;right:0;background:repeating-linear-gradient(45deg,#2a2552 0 4px,#1a1735 4px 8px)}
+#retire{font-family:var(--display);font-size:12px;background:var(--money);color:#10261a;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:12px;animation:pulse 1s steps(2) infinite}
+#retire:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
+@keyframes pulse{50%{filter:brightness(1.25)}}
+.panel{background:var(--panel);border:2px solid var(--line);min-width:0}
+.tabs{display:flex;border-bottom:2px solid var(--line);overflow-x:auto}
+.tab{flex:1;background:none;border:0;border-right:2px solid var(--line);padding:10px 6px;font-size:14px;color:var(--muted);white-space:nowrap}
+.tab:last-child{border-right:0}
+.tab[aria-selected="true"]{background:var(--panel2);color:var(--amber)}
+.tabNote{padding:8px 12px 0;font-size:13px;color:var(--muted)}
+#shop{display:flex;flex-direction:column;gap:8px;padding:10px;max-height:460px;overflow-y:auto}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--panel2);border:2px solid transparent;padding:8px 10px}
+.item.owned{opacity:.6}
+.item .n{font-weight:600;font-size:16px}
+.item .d{font-size:13px;color:var(--muted);margin-top:2px}
+.item .u{font-size:12px;color:var(--warn);margin-top:3px}
+.buy{font-family:var(--display);font-size:9px;background:var(--amber);color:#2b1700;border:2px solid #000;box-shadow:3px 3px 0 #000;padding:9px 8px;min-width:84px;white-space:nowrap}
+.buy:disabled{background:#4a456e;color:#8f89bd;cursor:not-allowed;box-shadow:none}
+.buy.on{background:var(--money);color:#10261a}
+.buy:not(:disabled):active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.slackHead{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:2px solid var(--line);font-size:14px;color:var(--muted)}
+#slack{list-style:none;margin:0;padding:8px 12px;display:flex;flex-direction:column;gap:5px;height:190px;overflow-y:auto;font-size:14px}
+#slack li{min-width:0;overflow-wrap:anywhere}
+#slack .who{color:var(--xp)}
+#slack .sys{color:var(--warn)}
+#slack .good{color:var(--money)}
+#slack .bad{color:var(--energy)}
+#modal{position:fixed;inset:0;background:rgba(8,6,20,.82);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.box{background:var(--panel);border:3px solid #000;box-shadow:0 0 0 3px var(--line),8px 8px 0 #000;max-width:520px;width:100%;padding:20px;max-height:90vh;overflow-y:auto}
+.box h2{font-family:var(--display);font-size:15px;line-height:1.5;margin:0 0 12px;color:var(--amber);text-wrap:balance}
+.box .big{font-family:var(--display);font-size:22px;color:var(--money);margin:6px 0 14px}
+.box p{margin:0 0 10px;max-width:60ch}
+.box .stats{display:grid;grid-template-columns:auto auto;gap:4px 16px;font-size:14px;color:var(--muted);margin:10px 0 4px}
+.box .stats b{color:var(--fg);font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.choices{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.choice{text-align:left;background:var(--panel2);border:2px solid var(--line);padding:10px 12px;font-size:15px}
+.choice:hover{border-color:var(--amber)}
+.choice.primary{background:var(--amber);color:#2b1700;border-color:#000;font-weight:600}
+.foot{max-width:1180px;margin:14px auto 0;font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.float{animation-duration:.01s}#retire{animation:none}}
+</style>
+
+<header class="top">
+  <h1>CTRL+ALT+RETIRE</h1>
+  <div class="tools">
+    <button class="tbtn" id="pauseBtn">Пауза</button>
+    <button class="tbtn" id="soundBtn">Звук: вкл</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="col">
+    <div class="hud">
+      <div class="stat"><div class="k">Возраст</div><div class="v" id="hAge">22.0</div></div>
+      <div class="stat"><div class="k">Грейд</div><div class="v" id="hGrade">Intern</div></div>
+      <div class="stat"><div class="k">Кэш</div><div class="v money" id="hCash">$0</div></div>
+      <div class="stat"><div class="k">ETF</div><div class="v money" id="hEtf">$0</div></div>
+      <div class="stat"><div class="k">Зарплата/год</div><div class="v" id="hInc">$0</div></div>
+      <div class="stat"><div class="k">Расходы/год</div><div class="v" id="hExp">$0</div></div>
+      <div class="stat"><div class="k">С клика</div><div class="v" id="hClick">$0</div></div>
+      <div class="stat"><div class="k">Поколение</div><div class="v" id="hGen">1</div></div>
+    </div>
+
+    <div id="stageWrap">
+      <canvas id="stage" width="192" height="120" tabindex="0" role="button" aria-label="Работать: кликай по разработчику"></canvas>
+      <div id="vign"></div>
+      <div class="tapHint" id="tapHint">КЛИКАЙ, ЧТОБЫ РАБОТАТЬ</div>
+    </div>
+
+    <div class="bars">
+      <div class="barRow"><span class="lbl">Энергия</span><div class="bar"><i id="eBar" style="--c:var(--energy)"></i><span class="cap" id="eCap"></span></div><span class="num" id="eNum">100</span></div>
+      <div class="barRow"><span class="lbl">Опыт</span><div class="bar"><i id="xBar" style="--c:var(--xp)"></i></div><span class="num" id="xNum">0%</span></div>
+      <div class="barRow"><span class="lbl">Цель FIRE</span><div class="bar"><i id="fBar" style="--c:var(--money)"></i></div><span class="num" id="fNum">$0</span></div>
+    </div>
+    <button id="retire" hidden>УВОЛИТЬСЯ НАВСЕГДА</button>
+  </div>
+
+  <div class="col">
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button class="tab" data-tab="e" aria-selected="true">Энергия</button>
+        <button class="tab" data-tab="w" aria-selected="false">Работа</button>
+        <button class="tab" data-tab="m" aria-selected="false">Деньги</button>
+        <button class="tab" data-tab="l" aria-selected="false">Жизнь</button>
+      </div>
+      <div class="tabNote" id="tabNote"></div>
+      <div id="shop"></div>
+    </div>
+    <div class="panel">
+      <div class="slackHead"><span># general</span><span id="unread">Slack</span></div>
+      <ul id="slack"></ul>
+    </div>
+  </div>
+</div>
+<p class="foot">Цель FIRE = 25 годовых расходов (правило 4%). Год жизни идёт 25 секунд. Если энергия упадёт до нуля, герой уснёт за клавиатурой. Прогресс сохраняется в этом браузере.</p>
+
+<div id="modal" hidden><div class="box" role="dialog" aria-modal="true"><h2 id="mTitle"></h2><div id="mBody"></div><div class="choices" id="mChoices"></div></div></div>
+
+<script>
+(()=>{
+const YEAR=25, END_AGE=67;
+const GR=[
+ {n:'Intern',sal:13000,xp:50,shirt:'#5b8cff'},
+ {n:'Junior',sal:24000,xp:130,shirt:'#4fc27a'},
+ {n:'Middle',sal:38000,xp:280,shirt:'#ff8a5b'},
+ {n:'Senior',sal:60000,xp:460,shirt:'#c0392b'},
+ {n:'Tech Lead',sal:85000,xp:700,shirt:'#e6e6f2'},
+ {n:'Staff',sal:115000,xp:1000,shirt:'#8e7cc3'},
+ {n:'Principal',sal:150000,xp:1400,shirt:'#3c3c52'},
+ {n:'CTO',sal:220000,xp:Infinity,shirt:'#1b1b22'}
+];
+const ITEMS=[
+ {id:'coffee',tab:'e',t:'c',name:'Кофе',desc:()=>`+${Math.round(22*S.coffeeTol)} энергии. С каждой чашкой эффект слабее.`,price:()=>20*(1+S.grade*0.6),buy(){addE(22*S.coffeeTol);S.coffeeTol*=0.85;S.coffeeShow=10;}},
+ {id:'drink',tab:'e',t:'c',name:'Энергетик',desc:()=>'+45 энергии сразу. Через 10 с краш: −15 и усталость ×1.8.',price:()=>60*(1+S.grade*0.6),buy(){addE(45);S.buffs.drink=10;}},
+ {id:'vac',tab:'e',t:'c',name:'Отпуск',desc:()=>S.age<S.vacReady?`Следующий отпуск не раньше ${Math.ceil(S.vacReady)} лет.`:'Полная энергия. Полгода без зарплаты, расходы продолжают идти.',price:()=>Math.max(800,0.1*GR[S.grade].sal*S.salaryMult),ok:()=>S.age>=S.vacReady,buy(){vacation();}},
+ {id:'sleep',tab:'e',t:'p',name:'Спать 8 часов',desc:'+0.6 энергии/с. Меньше ночных коммитов: доход с клика −10%.',price:0,regen:.6,click:.9},
+ {id:'chair',tab:'e',t:'p',name:'Эргономичное кресло',desc:'+0.3 энергии/с. Спина скажет спасибо.',price:1200,regen:.3},
+ {id:'gym',tab:'e',t:'p',name:'Спортзал',desc:'+0.5 энергии/с, запас энергии медленнее падает с возрастом.',price:600,upkeep:1500,regen:.5},
+ {id:'therapy',tab:'e',t:'p',name:'Психотерапевт',desc:'Усталость −15%.',price:300,upkeep:3600,drain:.85},
+ {id:'dog',tab:'e',t:'p',name:'Собака',desc:'+0.6 энергии/с. Гуляешь дважды в день, хочешь ты или нет.',price:2000,upkeep:2400,regen:.6},
+ {id:'kbd',tab:'w',t:'p',name:'Механическая клавиатура',desc:'Доход с клика ×1.2. Соседи по опенспейсу против.',price:300,click:1.2},
+ {id:'mon2',tab:'w',t:'p',name:'Второй монитор',desc:'Доход с клика ×1.3.',price:1200,click:1.3},
+ {id:'course',tab:'w',t:'p',name:'Курсы и конференции',desc:'Опыт ×1.5. Быстрее до повышения.',price:2500,xp:1.5},
+ {id:'copilot',tab:'w',t:'p',name:'AI-копилот',desc:'Доход с клика ×1.5, опыт ×1.3. Компания тоже заметит, что людей можно меньше.',price:400,upkeep:240,click:1.5,xp:1.3},
+ {id:'mon3',tab:'w',t:'p',name:'Третий монитор',desc:'Доход с клика ×1.3. Шея против.',price:5000,click:1.3,req:'mon2'},
+ {id:'freelance',tab:'w',t:'t',name:'Фриланс по вечерам',desc:'Зарплата +30%, усталость ×1.25.'},
+ {id:'invest',tab:'m',t:'a',name:'Вложить весь кэш в ETF',desc:'Индекс растёт примерно на 7% в год. Сложный процент сделает остальное.',label:'Вложить',ok:()=>S.cash>=50,buy(){S.etf+=S.cash;log('sys',`Вложил ${fmt(S.cash)} в ETF.`);S.cash=0;}},
+ {id:'sell',tab:'m',t:'a',name:'Продать 25% ETF',desc:'Если не хватает кэша на покупки.',label:'Продать',ok:()=>S.etf>=50,buy(){const v=S.etf*.25;S.etf-=v;S.cash+=v;}},
+ {id:'auto',tab:'m',t:'t',name:'Автоинвест',desc:'Половина свободных денег и денег с кликов сама уходит в ETF.'},
+ {id:'pet',tab:'m',t:'l',name:'Пет-проект',desc:()=>S.pet>=5?'Пет-проект стал маленьким бизнесом.':`Уровень ${S.pet}/5. Даёт ${fmt(petInc(S.pet+1))}/год, но +0.15 к усталости за уровень.`,price:()=>1500*Math.pow(3,S.pet),ok:()=>S.pet<5,buy(){S.pet++;log('good',`Пет-проект: уровень ${S.pet}.`);}},
+ {id:'flat',tab:'l',t:'p',name:'Квартира получше',desc:'Усталость −10%. Наконец-то не слышно соседей.',price:4000,upkeep:9000,drain:.9},
+ {id:'watch',tab:'l',t:'p',name:'Дорогие часы',desc:'Усталость −3%. Зато грейд видно издалека.',price:12000,upkeep:500,drain:.97},
+ {id:'car',tab:'l',t:'p',name:'Машина',desc:'Усталость −6%. Пробки съедают часть эффекта.',price:15000,upkeep:6000,drain:.94},
+ {id:'bali',tab:'l',t:'p',name:'Зимовать на Бали',desc:'Усталость −12%. Работаешь из коворкинга у океана.',price:3000,upkeep:14000,drain:.88},
+ {id:'penthouse',tab:'l',t:'p',name:'Пентхаус',desc:'Усталость −12%. Соседи — фаундеры.',price:90000,upkeep:36000,drain:.88,req:'flat'}
+];
+const TAB_NOTE={e:'Энергия падает быстрее с каждым грейдом и с возрастом. Кликами её можно поддерживать.',w:'Больше денег и опыта с каждого клика.',m:'Деньги, которые работают, пока работаешь ты.',l:'Каждые $1k расходов в год добавляют $25k к цели FIRE.'};
+const PINGS=['@olga_pm: есть 5 минут?','@olga_pm: быстрый вопрос','@devops_ivan: кто трогал прод?','@hr_masha: заполните, пожалуйста, опрос вовлечённости','@qa_lena: у меня воспроизводится, а у тебя?','@olga_pm: а можно ещё одну маленькую фичу?','@team: кто на обед?','@manager: давай синкнемся','@designer_kate: я чуть-чуть поправила макет (весь)','@jira_bot: тебе назначено 7 задач','@ceo: мы как семья','@recruiter_bot: hi! open to new opportunities?','@olga_pm: дедлайн был вчера','@devops_ivan: деплой в пятницу, что может пойти не так','@manager: перенесём 1:1 ещё раз','@intern_petya: а где у нас документация?','@qa_lena: в проде баг, но это фича','@olga_pm: стендап через 2 минуты','@security: смените пароль, это 14-й раз'];
+const PINGS_LEAD=['@hr: у тебя 4 собеседования завтра','@board: стратегия на 5 лет нужна к понедельнику','@finance: срежьте бюджет на 20%','@ceo: что с roadmap?','@manager: тебе ещё одна команда, справишься же'];
+const SAVE='car_save_v1', LEG='car_legacy_v1';
+
+let S, sound=true, tab='e', modalOpen=false, ac=null, lastEvent='';
+const $=id=>document.getElementById(id);
+const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+function legacy(){return store.get(LEG)||{gen:1,cash:0,best:null};}
+
+function fresh(){const L=legacy();return{gen:L.gen,age:22,cash:500+L.cash,etf:0,grade:0,xp:0,energy:100,salaryMult:1,owned:{},pet:0,freelance:false,auto:false,declined:0,coffeeTol:1,coffeeShow:0,buffs:{},startup:null,unicorn:false,startupDone:false,unemployedUntil:0,vacReady:22,eventT:30,pingT:3,clicks:0,over:false,started:false,paused:false,log:[]};}
+
+const has=id=>!!S.owned[id];
+const owned=()=>ITEMS.filter(i=>i.t==='p'&&has(i.id));
+const prod=(k,d=1)=>owned().reduce((a,i)=>a*(i[k]??1),d);
+const petInc=l=>l?1500*(Math.pow(2,l)-1):0;
+function baseSalary(){let s=GR[S.grade].sal*S.salaryMult;if(S.freelance)s*=1.3;if(S.startup)s*=.6;return s;}
+function salary(){if(S.age<S.unemployedUntil)return 0;let s=baseSalary();if(S.buffs.crunch)s*=2;return s;}
+function expenses(){return 12000*(1+.25*S.grade)+owned().reduce((a,i)=>a+(i.upkeep||0),0);}
+const fire=()=>25*expenses();
+const nw=()=>S.cash+S.etf;
+function maxE(){return Math.max(35,100*(1-Math.max(0,S.age-30)*.011*(has('gym')?.55:1)));}
+function clickMult(){return prod('click');}
+function xpMult(){return prod('xp')*(1+.15*(S.gen-1))*(S.buffs.crunch?2:1);}
+function regen(){return owned().reduce((a,i)=>a+(i.regen||0),0);}
+function drain(){let d=.9*Math.pow(1.3,S.grade)*(1+Math.max(0,S.age-40)*.025)*prod('drain');if(S.freelance)d*=1.25;if(S.buffs.crunch)d*=2.5;if(S.buffs.crash)d*=1.8;return d+S.pet*.15;}
+function clickGain(){return S.age<S.unemployedUntil?0:baseSalary()/YEAR*.12*clickMult()*(S.buffs.crunch?2:1);}
+function need(){return GR[S.grade].xp;}
+function addE(v){S.energy=Math.min(maxE(),S.energy+v);}
+function fmt(n){const s=n<0?'−':'';n=Math.abs(n);if(n<1000)return s+'$'+Math.round(n);if(n<1e6)return s+'$'+(n/1e3).toFixed(n<1e4?1:0)+'k';return s+'$'+(n/1e6).toFixed(2)+'M';}
+
+/* ---------- log ---------- */
+function log(cls,text){S.log.push([cls,text]);if(S.log.length>40)S.log.shift();renderLog();}
+function renderLog(){const ul=$('slack');ul.innerHTML='';for(const[c,t]of S.log){const li=document.createElement('li');if(c==='ping'){const m=t.indexOf(':');li.innerHTML=`<span class="who"></span>`;li.firstChild.textContent=t.slice(0,m+1);li.append(t.slice(m+1));}else{li.className=c;li.textContent=t;}ul.append(li);}ul.scrollTop=ul.scrollHeight;}
+
+/* ---------- sound ---------- */
+function blip(f=700,d=.05,type='square',v=.035){if(!sound)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+d+.02);}catch(e){}}
+function jingle(notes){notes.forEach((f,i)=>setTimeout(()=>blip(f,.12,'square',.04),i*110));}
+
+/* ---------- modal ---------- */
+function modal(title,html,choices){modalOpen=true;$('mTitle').textContent=title;$('mBody').innerHTML=html;const c=$('mChoices');c.innerHTML='';choices.forEach((ch,i)=>{const b=document.createElement('button');b.className='choice'+(ch.primary?' primary':'');b.textContent=ch.l;b.onclick=()=>{closeModal();ch.f&&ch.f();};c.append(b);});$('modal').hidden=false;setTimeout(()=>c.firstChild&&c.firstChild.focus(),30);}
+function closeModal(){modalOpen=false;$('modal').hidden=true;}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- actions ---------- */
+let codeLines=[];
+function newLine(){return[Math.floor(Math.random()*4)*2,3+Math.floor(Math.random()*13),Math.floor(Math.random()*4)];}
+for(let m=0;m<3;m++){codeLines[m]=[];for(let i=0;i<4;i++)codeLines[m].push(newLine());}
+let typing=0;
+function work(ev){
+  if(!S.started||S.over||modalOpen||S.paused)return;
+  const g=clickGain();
+  if(S.auto){S.cash+=g*.5;S.etf+=g*.5;}else S.cash+=g;
+  S.xp+=.6*xpMult();addE(.9);S.clicks++;typing=1;
+  const m=Math.floor(Math.random()*monCount());codeLines[m].shift();codeLines[m].push(newLine());
+  blip(520+Math.random()*380,.04);
+  const r=$('stageWrap').getBoundingClientRect();
+  let x=r.width*.45,y=r.height*.35;
+  if(ev&&ev.clientX!=null&&ev.clientX>0){x=ev.clientX-r.left;y=ev.clientY-r.top;}
+  floatTxt(g>0?'+'+fmt(g):'резюме…',x,y,'');
+  if(S.clicks%3===0)floatTxt('+'+(1.8*xpMult()).toFixed(1)+' XP',x+18,y+14,'xp');
+  $('tapHint').hidden=true;
+}
+function floatTxt(t,x,y,cls){const d=document.createElement('div');d.className='float '+cls;d.textContent=t;d.style.left=(x-20+Math.random()*16)+'px';d.style.top=(y-10)+'px';$('stageWrap').append(d);setTimeout(()=>d.remove(),950);}
+function monCount(){return 1+(has('mon2')?1:0)+(has('mon3')?1:0);}
+
+function vacation(){
+  S.energy=maxE();
+  S.age+=.5;S.cash-=expenses()*.5;S.etf*=Math.pow(1.07,.5);S.vacReady=S.age+2;
+  log('good','Отпуск. Полгода без Slack. Энергия полная.');jingle([523,659,784]);
+}
+
+function buyItem(it){
+  if(it.t==='p'){const p=typeof it.price==='function'?it.price():it.price;if(has(it.id)||S.cash<p)return;S.cash-=p;S.owned[it.id]=true;log('good',`Куплено: ${it.name}.`);blip(880,.1);if(it.id==='copilot')log('ping','@manager: о, ты теперь в 2 раза быстрее? Отлично, вот ещё задачи');return;}
+  if(it.t==='t'){S[it.id]=!S[it.id];log('sys',`${it.name}: ${S[it.id]?'вкл':'выкл'}.`);blip(660,.06);return;}
+  const p=it.price?it.price():0;if(it.ok&&!it.ok())return;if(S.cash<p)return;S.cash-=p;it.buy();blip(780,.07);
+}
+
+/* ---------- promotion & events ---------- */
+function promo(){
+  const nx=GR[S.grade+1];const cur=GR[S.grade];
+  modal(`Повышение: ${nx.n}`,`<p>Тебя зовут на новую роль. Больше денег, больше созвонов, больше ответственности.</p><div class="stats"><span>Зарплата</span><b>${fmt(cur.sal*S.salaryMult)} → ${fmt(nx.sal*S.salaryMult)}</b><span>Усталость</span><b>×1.3</b><span>Базовые расходы</span><b>${fmt(12000*(1+.25*S.grade))} → ${fmt(12000*(1+.25*(S.grade+1)))}</b></div><p style="margin-top:10px;color:var(--muted)">Новый уровень — новые привычки. Цель FIRE тоже вырастет.</p>`,[
+    {l:'Принять повышение',primary:true,f(){S.grade++;S.xp=0;log('good',`Ты теперь ${GR[S.grade].n}!`);jingle([523,659,784,1046]);}},
+    {l:'Отказаться и остаться на месте',f(){S.xp=need()*.4;S.declined++;log('sys','Ты отказался от повышения. Менеджер удивлён.');}}
+  ]);
+}
+const EVENTS=[
+ {id:'crunch',w:1.2,title:'Кранч перед релизом',text:'Релиз в понедельник. PM пишет: «Ребят, ну поднажмём?»',ch:[
+   {l:'Впрячься: ×2 деньги и опыт, ×2.5 усталость на 30 с',f(){S.buffs.crunch=30;log('bad','Кранч начался. Пицца в офисе.');}},
+   {l:'Сказать, что болит зуб',f(){S.xp=Math.max(0,S.xp-need()*.1);log('sys','Отмазка сработала. Но тимлид запомнил.');}}]},
+ {id:'prod',w:1,title:'Прод упал. Пятница, 23:47',text:'Звонит дежурный. Ты уже в пижаме.',ch:[
+   {l:'Чинить: −25 энергии, +опыт, +бонус',f(){S.energy-=25;S.xp+=need()*.25;const b=baseSalary()*.03;S.cash+=b;log('good',`Починил к 3 ночи. Бонус ${fmt(b)}.`);}},
+   {l:'Не брать трубку',f(){if(Math.random()<.5){S.xp=Math.max(0,S.xp-need()*.3);log('bad','Утром тебя ждал созвон «на 5 минут».');}else log('sys','Пронесло: починили без тебя.');}}]},
+ {id:'recruiter',w:.8,cond:()=>S.grade>=1,title:'Рекрутер в LinkedIn',text:'«Hi! Saw your profile. Perfect role for you: +40% к зарплате. Онбординг интенсивный.»',ch:[
+   {l:'Перейти: +40% к зарплате, энергия −50%',f(){S.salaryMult*=1.4;S.energy*=.5;log('good','Новая компания, новый пропуск, новый Slack.');}},
+   {l:'Остаться',f(){log('sys','Ты остался. Коллеги рады, зарплата тоже не изменилась.');}}]},
+ {id:'crash',w:.7,cond:()=>S.etf>2000,pre(){S.etf*=.7;},title:'Рынок рухнул',text:'ETF −30% за неделю. В чатах паника, в новостях «конец эпохи».',ch:[
+   {l:'Держать и не смотреть',f(){S.buffs.recovery=YEAR*3;log('sys','Держишь. Следующие 3 года рынок будет восстанавливаться.');}},
+   {l:'Продать всё в панике',f(){S.cash+=S.etf;S.etf=0;log('bad','Продал на дне. Классика.');}}]},
+ {id:'startup',w:.6,cond:()=>S.grade>=2&&!S.startupDone&&!S.startup,title:'Друг зовёт в стартап',text:'«Зарплата меньше, зато опцион. Через 5 лет будем единорогом. Наверное.»',ch:[
+   {l:'Рискнуть: зарплата ×0.6 на 5 лет, шанс на экзит',f(){S.startup={until:S.age+5};S.startupDone=true;log('sys','Ты в стартапе. Офис — это кухня друга.');}},
+   {l:'Отказаться',f(){S.startupDone=true;log('sys','Друг обиделся, но ненадолго.');}}]},
+ {id:'layoff',w:()=>has('copilot')?1.1:.35,cond:()=>S.grade>=1&&S.age>=S.unemployedUntil&&!S.startup,title:'Реорганизация',text:()=>has('copilot')?'«Мы внедрили AI и оптимизируем команду». Ирония в том, что копилота ты купил сам.':'«Компания фокусируется на эффективности». Тебя сократили.',ch:[
+   {l:'Искать работу: полгода без зарплаты, +30 энергии',f(){S.unemployedUntil=S.age+.5;addE(30);log('bad','Полгода в поиске работы. Зато выспался.');}}]},
+ {id:'review',w:1,title:'Перформанс-ревью',text:'Менеджер: «Расскажи о своих достижениях за полгода».',ch:[
+   {l:'«Я всё сделал сам»',f(){if(Math.random()<.5){S.xp+=need()*.4;log('good','Сработало. Тебя заметили.');}else{S.xp=Math.max(0,S.xp-need()*.15);log('bad','Команда прочитала фидбек. Неловко.');}}},
+   {l:'«Это заслуга команды»',f(){S.xp+=need()*.15;log('sys','Скромно и надёжно.');}}]},
+ {id:'team',w:.8,title:'Тимбилдинг в пятницу вечером',text:'Квиз, пицца и обязательное веселье до 23:00.',ch:[
+   {l:'Пойти: −15 энергии, +опыт',f(){S.energy-=15;S.xp+=need()*.12;log('sys','Выиграли квиз. Ты знал столицу Буркина-Фасо.');}},
+   {l:'Слиться',f(){log('sys','«У меня собака». Даже если собаки нет.');}}]},
+ {id:'bonus',w:.7,cond:()=>S.age>=S.unemployedUntil,title:'Годовой бонус',text:()=>`Компания выполнила план. Тебе ${fmt(baseSalary()*.1)}.`,ch:[
+   {l:'Вложить в ETF',f(){S.etf+=baseSalary()*.1;log('good','Бонус ушёл в ETF.');}},
+   {l:'Потратить на себя: +25 энергии',f(){addE(25);log('sys','Новые наушники. Жизнь стала лучше.');}}]}
+];
+function triggerEvent(){
+  const pool=EVENTS.filter(e=>(!e.cond||e.cond())&&e.id!==lastEvent);
+  const ws=pool.map(e=>typeof e.w==='function'?e.w():e.w);let r=Math.random()*ws.reduce((a,b)=>a+b,0);
+  let ev=pool[0];for(let i=0;i<pool.length;i++){r-=ws[i];if(r<=0){ev=pool[i];break;}}
+  lastEvent=ev.id;ev.pre&&ev.pre();blip(330,.15,'triangle',.06);
+  modal(ev.title,`<p>${esc(typeof ev.text==='function'?ev.text():ev.text)}</p>`,ev.ch);
+}
+
+/* ---------- endings ---------- */
+function ending(kind){
+  if(S.over)return;S.over=true;store.del(SAVE);
+  const age=Math.min(S.age,END_AGE).toFixed(1), worth=nw(), years=(S.age-22).toFixed(0);
+  let title,big,text;
+  const lifestyle=['flat','car','bali','penthouse','watch'].some(has);
+  if(kind==='sleep'){title='Уснул на клавиатуре';big='GAME OVER';text=`Тебе было ${age}. Последний коммит: «fix fix final FINAL». Утром коллеги нашли тебя лицом в клавиатуре, а в Slack висело 43 непрочитанных.`;jingle([392,330,262,196]);}
+  else if(kind==='fire'){
+    if(S.unicorn){title='Единорог';text='Стартап друга выстрелил. Ты ушёл с опционом и больше никогда не открывал Jira.';}
+    else if(S.grade<=3&&S.declined>=3){title='Вечный Senior';text='Ты отказался от всех повышений, писал код, спал по ночам и всё равно накопил. Так можно было?';}
+    else if(!lifestyle){title='Дауншифтер';text='Ни машины, ни пентхауса. Зато свобода раньше, чем у всех. Огород, книги, собака соседа.';}
+    else if(S.age<40){title='Домик у моря';text='Ты ушёл молодым. Ноутбук лежит в шкафу, кактус жив.';}
+    else if(S.age<50){title='Ранняя пенсия';text='Половину жизни отдал работе, вторую забираешь себе.';}
+    else{title='Пенсия чуть раньше срока';text='Устал, но успел. Впереди спокойные годы без созвонов.';}
+    big=`Пенсия в ${age}`;jingle([523,659,784,1046,1318]);
+  } else {
+    if(worth>=fire()){title='Пенсия по графику';text='Ты доработал до 67. Денег хватит. Времени осталось меньше, чем хотелось.';}
+    else{title='Бедная пенсия';text='Ты доработал до 67, но накоплений не хватает. Будешь вспоминать, как чинил прод в пятницу ночью.';}
+    big='Пенсия в 67';jingle([392,440,392,330]);
+  }
+  const L=legacy();const inherit=Math.max(0,Math.min(worth*.05,60000));
+  const best=kind==='fire'&&(L.best==null||S.age<L.best)?+age:L.best;
+  store.set(LEG,{gen:L.gen,cash:L.cash,best});
+  modal(title,`<div class="big">${esc(big)}</div><p>${esc(text)}</p><div class="stats"><span>Лет в профессии</span><b>${years}</b><span>Грейд</span><b>${GR[S.grade].n}</b><span>Капитал</span><b>${fmt(worth)}</b><span>Цель FIRE</span><b>${fmt(fire())}</b><span>Кликов</span><b>${S.clicks}</b><span>Поколение</span><b>${S.gen}</b>${best!=null?`<span>Рекорд: пенсия в</span><b>${best}</b>`:''}</div>`,[
+    {l:`Играть за наследника: старт с ${fmt(500+inherit)}, опыт +15%`,primary:true,f(){store.set(LEG,{gen:L.gen+1,cash:inherit,best});newGame();}},
+    {l:'Начать с нуля',f(){store.set(LEG,{gen:1,cash:0,best});newGame();}}
+  ]);
+}
+
+/* ---------- loop ---------- */
+function tick(dt){
+  if(!S.started||S.over||modalOpen||S.paused)return;
+  S.age+=dt/YEAR;
+  const flow=((salary()+petInc(S.pet))-expenses())/YEAR*dt;
+  if(S.auto&&flow>0){S.etf+=flow*.5;S.cash+=flow*.5;}else S.cash+=flow;
+  S.etf*=Math.pow(1+(S.buffs.recovery?.16:.07),dt/YEAR);
+  S.xp+=.1*dt;
+  S.energy=Math.min(maxE(),S.energy+(regen()-drain())*dt);
+  S.coffeeTol=Math.min(1,S.coffeeTol+.012*dt);
+  if(S.coffeeShow>0)S.coffeeShow-=dt;
+  for(const k in S.buffs){S.buffs[k]-=dt;if(S.buffs[k]<=0){delete S.buffs[k];if(k==='drink'){S.energy-=15;S.buffs.crash=6;log('bad','Краш после энергетика.');}if(k==='crunch')log('sys','Релиз вышел. Кранч закончился.');}}
+  if(S.energy<=0){S.energy=0;ending('sleep');return;}
+  if(S.age>=END_AGE){ending('age');return;}
+  if(S.startup&&S.age>=S.startup.until){S.startup=null;
+    if(Math.random()<.2){const x=1500000;S.cash+=x;S.unicorn=true;modal('Экзит!',`<p>Стартап купила корпорация. Твой опцион: <b>${fmt(x)}</b>.</p>`,[{l:'Ура',primary:true}]);jingle([523,659,784,1046,1318,1568]);}
+    else modal('Стартап закрылся','<p>Деньги кончились, друг уехал на ретрит. Ты возвращаешься на обычную зарплату.</p>',[{l:'Ну что ж',primary:true}]);
+    return;}
+  if(S.grade<GR.length-1&&S.xp>=need()){promo();return;}
+  S.eventT-=dt;if(S.eventT<=0){S.eventT=32+Math.random()*28;triggerEvent();return;}
+  S.pingT-=dt;if(S.pingT<=0){S.pingT=5+Math.random()*6;const pool=S.grade>=4?PINGS.concat(PINGS_LEAD,PINGS_LEAD):PINGS;log('ping',pool[Math.floor(Math.random()*pool.length)]);blip(1200,.03,'sine',.02);}
+}
+
+/* ---------- render UI ---------- */
+function renderHUD(){
+  $('hAge').textContent=S.age.toFixed(1);
+  $('hGrade').textContent=GR[S.grade].n;
+  $('hCash').textContent=fmt(S.cash);$('hCash').style.color=S.cash<0?'var(--energy)':'';
+  $('hEtf').textContent=fmt(S.etf);
+  const sal=salary();$('hInc').textContent=S.age<S.unemployedUntil?'поиск…':fmt(sal+petInc(S.pet));
+  $('hExp').textContent=fmt(expenses());
+  $('hClick').textContent=fmt(clickGain());
+  $('hGen').textContent=S.gen;
+  const me=maxE();$('eBar').style.width=(S.energy)+'%';$('eCap').style.width=(100-me)+'%';
+  const net=regen()-drain();
+  $('eNum').textContent=`${Math.round(S.energy)} ${net>=0?'+':'−'}${Math.abs(net).toFixed(1)}/с`;
+  const low=S.energy/me<.25;$('vign').style.boxShadow=low?`inset 0 0 ${30+Math.sin(performance.now()/150)*14}px 6px var(--energy)`:'inset 0 0 0 0 transparent';
+  if(S.grade<GR.length-1){const p=Math.min(1,S.xp/need());$('xBar').style.width=p*100+'%';$('xNum').textContent=Math.round(p*100)+'%';}else{$('xBar').style.width='100%';$('xNum').textContent='MAX';}
+  const f=fire(),w=nw();$('fBar').style.width=Math.max(0,Math.min(1,w/f))*100+'%';$('fNum').textContent=`${fmt(w)} / ${fmt(f)}`;
+  $('retire').hidden=!(S.started&&!S.over&&w>=f);
+}
+let shopSig='';
+function renderShop(force){
+  const list=ITEMS.filter(i=>i.tab===tab&&(!i.req||has(i.req)));
+  const sig=tab+'|'+list.map(i=>{const p=priceOf(i);return i.id+(has(i.id)?1:0)+(S[i.id]?1:0)+(canBuy(i)?1:0)+Math.round(p)+(typeof i.desc==='function'?i.desc():'');}).join(',');
+  if(!force&&sig===shopSig)return;shopSig=sig;
+  $('tabNote').textContent=TAB_NOTE[tab];
+  const box=$('shop');box.innerHTML='';
+  for(const it of list){
+    const row=document.createElement('div');row.className='item'+(it.t==='p'&&has(it.id)?' owned':'');
+    const desc=typeof it.desc==='function'?it.desc():it.desc;
+    const p=priceOf(it);
+    let u='';if(it.upkeep)u=`+${fmt(it.upkeep)}/год к расходам · +${fmt(it.upkeep*25)} к цели FIRE`;
+    row.innerHTML=`<div style="min-width:0"><div class="n"></div><div class="d"></div>${u?'<div class="u"></div>':''}</div>`;
+    row.querySelector('.n').textContent=it.name;row.querySelector('.d').textContent=desc;if(u)row.querySelector('.u').textContent=u;
+    const b=document.createElement('button');b.className='buy';b.dataset.id=it.id;
+    if(it.t==='p'){b.textContent=has(it.id)?'ЕСТЬ':(p?fmt(p):'FREE');b.disabled=has(it.id)||!canBuy(it);}
+    else if(it.t==='t'){b.textContent=S[it.id]?'ВКЛ':'ВЫКЛ';if(S[it.id])b.classList.add('on');}
+    else if(it.t==='a'){b.textContent=it.label.toUpperCase();b.disabled=!canBuy(it);}
+    else{b.textContent=(it.ok&&!it.ok())?'—':fmt(p);b.disabled=!canBuy(it);}
+    row.append(b);box.append(row);
+  }
+}
+function priceOf(i){return typeof i.price==='function'?i.price():(i.price||0);}
+function canBuy(i){if(!S.started||S.over)return false;if(i.t==='t')return true;if(i.t==='p'&&has(i.id))return false;if(i.ok&&!i.ok())return false;return S.cash>=priceOf(i);}
+
+/* ---------- pixel scene ---------- */
+const cv=$('stage'),cx=cv.getContext('2d');cx.imageSmoothingEnabled=false;
+const R=(x,y,w,h,c)=>{cx.fillStyle=c;cx.fillRect(x|0,y|0,w|0,h|0);};
+const lerp=(a,b,t)=>a+(b-a)*t;
+function mix(c1,c2,t){t=Math.max(0,Math.min(1,t));const a=parseInt(c1.slice(1),16),b=parseInt(c2.slice(1),16);const r=Math.round(lerp(a>>16,b>>16,t)),g=Math.round(lerp(a>>8&255,b>>8&255,t)),bl=Math.round(lerp(a&255,b&255,t));return'#'+((1<<24)+(r<<16)+(g<<8)+bl).toString(16).slice(1);}
+const SKY=['#8fd3ff','#5fb6ff','#e8b088','#b8c7dd'],TREE=['#6fdc6f','#2fa84f','#ff8c3a','#eef3ff'];
+const CODE=['#ffb84d','#7cc4ff','#ff7ab6','#7ee0a1'];
+const BLD=[[12,22],[20,14],[28,26],[38,18],[52,24],[58,12]];
+function draw(t){
+  const age=S.age, season=Math.floor((age%1)*4);
+  R(0,0,192,92,'#2b2654');R(0,86,192,6,'#231f47');
+  R(0,92,192,28,'#1a1735');for(let i=0;i<12;i++)R(i*16+((i%2)*4),92,1,28,'#221e44');
+  // window
+  R(6,8,60,46,'#4a4385');R(8,10,56,42,SKY[season]);
+  if(season===1)R(52,14,6,6,'#fff3a0');
+  for(const[x,h]of BLD)R(8+x-4,52-h,8,h,mix(SKY[season],'#2b2654',.55));
+  R(46,34,3,18,'#5a3b24');R(40,26,15,10,TREE[season]);R(42,22,11,4,TREE[season]);
+  if(season===3)for(let i=0;i<14;i++){const sx=(i*13+t/90)%56,sy=(i*7+t/40)%42;R(8+sx,10+sy,1,1,'#ffffff');}
+  if(season===2)for(let i=0;i<5;i++){const sx=(i*11+t/120)%56,sy=(i*17+t/60)%42;R(8+sx,10+sy,1,1,'#ff8c3a');}
+  R(35,10,2,42,'#4a4385');R(8,30,56,2,'#4a4385');
+  // shelf + trophies (one per grade)
+  R(112,24,70,2,'#6b4430');for(let i=0;i<S.grade;i++){R(116+i*8,18,4,4,'#ffd23f');R(117+i*8,22,2,2,'#c99a1a');}
+  // poster or postcard
+  if(has('bali')){R(78,14,20,14,'#5fd0e8');R(78,24,20,4,'#f2d58a');R(86,16,2,9,'#6b4430');R(82,15,10,3,'#2fa84f');}
+  else{R(78,14,20,16,'#3d3770');R(80,16,16,6,'#ffb84d');R(80,24,10,1,'#a69fd8');R(80,26,13,1,'#a69fd8');}
+  // floor stuff
+  if(has('flat')){R(4,74,8,18,'#2fa84f');R(2,70,4,8,'#3fc06a');R(9,68,4,10,'#3fc06a');R(3,88,10,4,'#b5654a');}
+  if(has('gym')){R(46,104,2,6,'#555');R(48,106,10,2,'#999');R(58,104,2,6,'#555');}
+  if(has('dog')){const w=Math.sin(t/120)>0?1:0;R(18,106,16,6,'#b5784a');R(32,103,6,6,'#b5784a');R(37,105,2,2,'#2b1a10');R(33,102,2,3,'#7a4a2a');R(15,104-w,3,2,'#b5784a');R(20,112,2,2,'#7a4a2a');R(30,112,2,2,'#7a4a2a');}
+  // chair
+  const chair=has('chair')?'#2f2f44':'#5a5a70';
+  R(64,40,6,34,chair);R(66,72,30,4,chair);R(80,76,2,12,'#222');R(72,88,18,2,'#222');R(71,90,3,2,'#000');R(88,90,3,2,'#000');
+  // desk
+  R(98,62,92,4,'#8a5a3c');R(98,66,92,2,'#6b4430');R(102,68,3,24,'#5a3b24');R(184,68,3,24,'#5a3b24');
+  // monitors
+  const mons=[[130,38]];if(has('mon2'))mons.push([158,38]);if(has('mon3'))mons.push([144,14]);
+  mons.forEach(([mx,my],k)=>{R(mx,my,26,19,'#3b3b52');R(mx+1,my+1,24,16,'#0f1a2a');
+    codeLines[k].forEach(([ind,len,c],i)=>R(mx+3+ind,my+3+i*3,Math.min(len,20-ind),1,CODE[c]));
+    if(Math.floor(t/400)%2)R(mx+3,my+15,2,1,'#efeaff');
+    if(k<2){R(mx+11,my+19,4,5,'#3b3b52');R(mx+7,my+23,12,1,'#3b3b52');}else{R(mx+11,my+19,4,5,'#3b3b52');}});
+  // keyboard, coffee, cactus
+  R(106,60,18,2,has('kbd')?'#ffb84d':'#cfcfe0');
+  if(S.coffeeShow>0){R(122,56,5,6,'#efeaff');R(127,57,2,3,'#efeaff');if(Math.floor(t/250)%2){R(123,52,1,2,'#a69fd8');R(125,50,1,2,'#a69fd8');}else{R(124,51,1,2,'#a69fd8');}}
+  const hp=Math.max(0,1-(age-22)/30);
+  R(184,56,6,6,'#b5654a');R(186,46,3,10,mix('#6b4f2a','#3fc06a',hp));R(184,49,2,4,mix('#6b4f2a','#3fc06a',hp));if(hp>.6)R(187,45,2,1,'#ff7ab6');
+  // hero
+  const shirt=GR[S.grade].shirt, skin='#f1c7a0';
+  const hair=age<40?mix('#4a2f1d','#6e5c50',(age-22)/18):mix('#6e5c50','#d8d8e0',(age-40)/20);
+  const bob=Math.floor(t/600)%2;
+  const ty=typing>0?1:0;
+  R(82,68,22,5,'#2d3b6b');R(100,72,5,16,'#2d3b6b');R(100,88,9,3,'#111');
+  R(78,46,13,23,shirt);
+  if(S.grade===4){R(84,47,1,12,'#c0392b');}
+  if(S.grade>=6){R(84,47,2,10,'#efeaff');}
+  R(83,44,4,3,skin);
+  const hy=33+(S.energy/maxE()<.15?2:0)+bob*0;
+  R(79,hy,11,11,skin);
+  const thin=Math.max(0,Math.min(3,Math.floor((age-48)/6)));
+  R(79+thin,hy-2,11-thin,3,hair);R(79,hy-1,4,8,hair);
+  if(age>34)R(85,hy+8,5,3,mix(hair,skin,.4));
+  const er=S.energy/maxE();
+  if(er<.15){R(86,hy+4,3,1,'#2b1a10');}
+  else{R(87,hy+3,2,2,'#2b1a10');if(er<.35)R(86,hy+3,3,1,skin);}
+  if(S.grade>=3||age>40){R(85,hy+3,5,1,'#222');R(85,hy+3,1,3,'#222');R(89,hy+3,1,3,'#222');}
+  R(88,hy+8,2,1,'#9a5a4a');
+  // arms
+  R(86,49,8,3,shirt);R(92,55,13,3,shirt);R(105,57+ty,3,2,skin);
+  // zzz
+  if(er<.25){const z=Math.floor(t/300)%3;cx.fillStyle='#efeaff';for(let i=0;i<=z;i++){const zx=92+i*5,zy=28-i*5;R(zx,zy,3,1,'#efeaff');R(zx+1,zy+1,1,1,'#efeaff');R(zx,zy+2,3,1,'#efeaff');}}
+  // night tint when tired
+  if(er<.3){cx.fillStyle=`rgba(10,6,30,${(.3-er)*1.6})`;cx.fillRect(0,0,192,120);}
+  if(S.buffs.crunch){cx.fillStyle='rgba(255,93,122,.08)';cx.fillRect(0,0,192,120);}
+  if(typing>0)typing-=.25;
+}
+
+/* ---------- boot ---------- */
+let last=performance.now(),saveT=0,uiT=0;
+function frame(now){
+  const dt=Math.min(.25,(now-last)/1000);last=now;
+  tick(dt);draw(now);
+  uiT+=dt;if(uiT>.1){uiT=0;renderHUD();renderShop();}
+  saveT+=dt;if(saveT>4&&S.started&&!S.over){saveT=0;store.set(SAVE,S);}
+  requestAnimationFrame(frame);
+}
+function intro(){
+  const L=legacy();const saved=store.get(SAVE);
+  const ch=[];
+  if(saved&&saved.started&&!saved.over)ch.push({l:`Продолжить карьеру (${saved.age.toFixed(1)} лет, ${GR[saved.grade].n})`,primary:true,f(){S=Object.assign(fresh(),saved);S.paused=false;afterLoad();}});
+  ch.push({l:L.gen>1?`Начать: поколение ${L.gen}`:'Начать карьеру',primary:!ch.length,f(){S=fresh();S.started=true;afterLoad();log('sys',L.gen>1?`Поколение ${L.gen}. Родители оставили ${fmt(L.cash)} и совет: «не повторяй наших ошибок».`:'Первый день в Synergix. Тебе выдали ноутбук и пропуск.');log('ping','@manager: добро пожаловать! онбординг в Confluence, удачи');}});
+  modal('Ctrl+Alt+Retire',`<p>Тебе 22, и сегодня твой первый день в компании <b>Synergix</b>. Опенспейс, один монитор, кактус на столе. Ты пришёл «на пару лет набраться опыта».</p><p><b>Кликай по герою</b>, чтобы работать: это деньги, опыт и немного бодрости. Энергия падает сама, быстрее с каждым повышением и с возрастом. Упадёт до нуля, и герой уснёт навсегда.</p><p>Цель: накопить <b>25 годовых расходов</b> и уйти на пенсию как можно раньше. Каждая покупка для комфорта отодвигает финиш.</p>${L.best!=null?`<p style="color:var(--muted)">Рекорд семьи: пенсия в ${L.best}.</p>`:''}`,ch);
+}
+function afterLoad(){S.started=true;S.over=false;renderLog();renderShop(true);if(S.clicks>0)$('tapHint').hidden=true;}
+function newGame(){S=fresh();S.started=true;afterLoad();codeLines.forEach(m=>m.forEach((_,i)=>m[i]=newLine()));log('sys',S.gen>1?`Поколение ${S.gen}. Наследство: ${fmt(S.cash-500)}.`:'Новая жизнь. Снова 22, снова Synergix.');}
+
+$('stage').addEventListener('pointerdown',e=>{e.preventDefault();work(e);});
+$('stage').addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();work(null);}});
+document.addEventListener('keydown',e=>{if(e.key===' '&&document.activeElement===document.body&&!e.repeat&&!modalOpen){e.preventDefault();work(null);}});
+$('shop').addEventListener('click',e=>{const b=e.target.closest('.buy');if(!b||b.disabled)return;const it=ITEMS.find(i=>i.id===b.dataset.id);buyItem(it);renderShop(true);renderHUD();});
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{tab=b.dataset.tab;document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===b));renderShop(true);}));
+$('pauseBtn').onclick=()=>{if(!S.started||S.over)return;S.paused=!S.paused;$('pauseBtn').textContent=S.paused?'Продолжить':'Пауза';};
+$('soundBtn').onclick=()=>{sound=!sound;$('soundBtn').textContent='Звук: '+(sound?'вкл':'выкл');};
+$('retire').onclick=()=>{if(nw()<fire())return;modal('Уволиться навсегда?',`<p>Тебе ${S.age.toFixed(1)}. Капитал ${fmt(nw())} при цели ${fmt(fire())}. Ноутбук можно вернуть в IT-отдел.</p>`,[{l:'Да, на пенсию',primary:true,f(){ending('fire');}},{l:'Ещё поработаю',f(){}}]);};
+
+function start(data){
+  S=(data&&data.S)||fresh();
+  if(data&&data.S){afterLoad();}else{intro();}
+  renderHUD();renderShop(true);requestAnimationFrame(frame);
+}
+window.claude?.hot?.snapshot?.(()=>({S}));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
+</html>
