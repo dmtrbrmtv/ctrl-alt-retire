@@ -16,6 +16,19 @@
 <meta property="og:image:alt" content="Пиксельный разработчик за столом с двумя мониторами в ночном опенспейсе">
 <meta property="og:locale" content="ru_RU">
 <meta name="twitter:card" content="summary_large_image">
+<!-- PostHog product analytics: production only, no cookies (memory persistence), game events are sent explicitly -->
+<script>
+if(/(^|\.)ctrlaltretire\.com$/.test(location.hostname)){
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}p||((p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",p.onerror=function(){p=null},(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r));var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],Object.defineProperty(u,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}}),Object.defineProperty(u.people,"toString",{configurable:!0,enumerable:!0,writable:!0,value:function(){return u.toString(1)+".people (stub)"}}),o="gu mu yu bu ku init Vu Gu zu Uu Ku el Wu Yu ju rh oh ah uh hh dh capture getExtension Zu fu gh calculateEventProperties ph register register_once register_for_session unregister unregister_for_session Hu mh getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys onActiveMatchingSurveysChanged renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync wh identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset kh shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty yh ih createPersonProfile setInternalOrTestUser bh Su xu opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing th debug il Os getPageViewId captureTraceFeedback captureTraceMetric Du".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+posthog.init('phc_oS77nZ9XFSVhsFk8MmDXz9igiQheKVo4RS5J9vB2s35a',{
+  api_host:'https://eu.i.posthog.com',
+  defaults:'2026-05-30',
+  person_profiles:'identified_only',
+  persistence:'memory',
+  autocapture:false
+});
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pixelify+Sans:wght@400;600&display=swap">
@@ -186,6 +199,8 @@ const ITEMS=[
  {id:'course',tab:'w',t:'p',name:'Курсы и конференции',desc:'Опыт ×1.5. Быстрее до повышения.',price:2500,xp:1.5},
  {id:'copilot',tab:'w',t:'p',name:'AI-копилот',desc:'Доход с клика ×1.5, опыт ×1.3. Компания тоже заметит, что людей можно меньше.',price:400,upkeep:240,click:1.5,xp:1.3},
  {id:'mon3',tab:'w',t:'p',name:'Третий монитор',desc:'Доход с клика ×1.3. Шея против.',price:5000,click:1.3,req:'mon2'},
+ {id:'mentor',tab:'w',t:'p',name:'Ментор',desc:'+0.25 опыта/с, даже когда не кликаешь. Раз в неделю созвон и честный фидбек.',price:800,upkeep:3000,pxp:.25},
+ {id:'hard',tab:'w',t:'t',name:'Брать задачи посложнее',desc:'Пассивный опыт ×2, но усталость ×1.3.'},
  {id:'freelance',tab:'w',t:'t',name:'Фриланс по вечерам',desc:'Зарплата +30%, усталость ×1.25.'},
  {id:'invest',tab:'m',t:'a',name:'Вложить весь кэш в ETF',desc:'Индекс растёт примерно на 7% в год. Сложный процент сделает остальное.',label:'Вложить',ok:()=>S.cash>=50,buy(){S.etf+=S.cash;log('sys',`Вложил ${fmt(S.cash)} в ETF.`);S.cash=0;}},
  {id:'sell',tab:'m',t:'a',name:'Продать 25% ETF',desc:'Если не хватает кэша на покупки.',label:'Продать',ok:()=>S.etf>=50,buy(){const v=S.etf*.25;S.etf-=v;S.cash+=v;}},
@@ -212,7 +227,7 @@ const $=id=>document.getElementById(id);
 const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
 function legacy(){return store.get(LEG)||{gen:1,cash:0,best:null};}
 
-function fresh(){const L=legacy();return{gen:L.gen,age:22,cash:500+L.cash,etf:0,grade:0,xp:0,energy:100,salaryMult:1,owned:{},pet:0,freelance:false,auto:false,declined:0,coffeeTol:1,coffeeShow:0,buffs:{},startup:null,unicorn:false,startupDone:false,unemployedUntil:0,vacReady:22,eventT:30,pingT:3,clicks:0,over:false,started:false,paused:false,log:[]};}
+function fresh(){const L=legacy();return{gen:L.gen,age:22,cash:500+L.cash,etf:0,grade:0,xp:0,energy:100,salaryMult:1,owned:{},pet:0,freelance:false,hard:false,auto:false,declined:0,coffeeTol:1,coffeeShow:0,buffs:{},startup:null,unicorn:false,startupDone:false,unemployedUntil:0,vacReady:22,eventT:30,pingT:3,clicks:0,over:false,started:false,paused:false,log:[]};}
 
 const has=id=>!!S.owned[id];
 const owned=()=>ITEMS.filter(i=>i.t==='p'&&has(i.id));
@@ -226,16 +241,35 @@ const nw=()=>S.cash+S.etf;
 function maxE(){return Math.max(35,100*(1-Math.max(0,S.age-30)*.011*(has('gym')?.55:1)));}
 function clickMult(){return prod('click');}
 function xpMult(){return prod('xp')*(1+.15*(S.gen-1))*(S.buffs.crunch?2:1);}
+// Experience the hero gains just by showing up; mentor and harder tasks speed it up at a cost
+function passiveXp(){return(.15+owned().reduce((a,i)=>a+(i.pxp||0),0))*(S.hard?2:1)*xpMult();}
 function regen(){return owned().reduce((a,i)=>a+(i.regen||0),0);}
 const ageTire=()=>1+Math.max(0,S.age-40)*.025;
 // Passive fatigue: the hero slowly tires just by going to work
-function drain(){let d=.4*Math.pow(1.3,S.grade)*ageTire()*prod('drain');if(S.freelance)d*=1.25;if(S.buffs.crunch)d*=2.5;if(S.buffs.crash)d*=1.8;return d+S.pet*.08;}
+function drain(){let d=.4*Math.pow(1.3,S.grade)*ageTire()*prod('drain');if(S.freelance)d*=1.25;if(S.hard)d*=1.3;if(S.buffs.crunch)d*=2.5;if(S.buffs.crash)d*=1.8;return d+S.pet*.08;}
 // Active work: each click converts energy into money and XP
 function clickCost(){let c=.8*ageTire()*prod('drain');if(S.buffs.crunch)c*=1.5;if(S.buffs.crash)c*=1.5;return c;}
 function clickGain(){return S.age<S.unemployedUntil?0:baseSalary()/YEAR*.2*clickMult()*(S.buffs.crunch?2:1);}
 function need(){return GR[S.grade].xp;}
 function addE(v){S.energy=Math.min(maxE(),S.energy+v);}
 function fmt(n){const s=n<0?'−':'';n=Math.abs(n);if(n<1000)return s+'$'+Math.round(n);if(n<1e6)return s+'$'+(n/1e3).toFixed(n<1e4?1:0)+'k';return s+'$'+(n/1e6).toFixed(2)+'M';}
+
+/* ---------- analytics ---------- */
+// Sends to PostHog on the live site; elsewhere just logs to the console
+const VERSION='2026-10-02';
+let sessClicks=0,sessPlay=0;
+function track(name,props,opts){
+  const p=Object.assign(S?{age:+S.age.toFixed(1),grade:GR[S.grade].n,gen:S.gen}:{},{v:VERSION},props);
+  try{const ph=window.posthog;if(ph&&typeof ph.capture==='function')ph.capture(name,p,opts);else console.debug('[track]',name,p);}catch(e){}
+}
+// Clicks and playtime are batched into one event whenever the tab is hidden or closed
+function flushSession(){
+  if(!S||!S.started||(sessClicks===0&&sessPlay<1))return;
+  track('session_summary',{clicks:sessClicks,play_seconds:Math.round(sessPlay)},{transport:'sendBeacon'});
+  sessClicks=0;sessPlay=0;
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushSession();});
+window.addEventListener('pagehide',flushSession);
 
 /* ---------- log ---------- */
 function log(cls,text){S.log.push([cls,text]);if(S.log.length>40)S.log.shift();renderLog();}
@@ -263,12 +297,12 @@ function work(ev){
   // Clicking can't knock the hero out; it just stops working when there's nothing left
   const cost=clickCost();
   if(S.energy-cost<10){floatTxt('нет сил',x,y,'tired');blip(160,.08,'triangle',.04);
-    if(performance.now()-tiredLogT>15000){tiredLogT=performance.now();log('bad','Сил работать нет. Выпей кофе, поспи или просто подожди зарплату.');}
+    if(performance.now()-tiredLogT>15000){tiredLogT=performance.now();track('too_tired_to_click');log('bad','Сил работать нет. Выпей кофе, поспи или просто подожди зарплату.');}
     return;}
   S.energy-=cost;
   const g=clickGain();
   if(S.auto){S.cash+=g*.5;S.etf+=g*.5;}else S.cash+=g;
-  S.xp+=xpMult();S.clicks++;typing=1;
+  S.xp+=xpMult();S.clicks++;sessClicks++;typing=1;
   const m=Math.floor(Math.random()*monCount());codeLines[m].shift();codeLines[m].push(newLine());
   blip(520+Math.random()*380,.04);
   floatTxt(g>0?'+'+fmt(g):'резюме…',x,y,'');
@@ -285,17 +319,17 @@ function vacation(){
 }
 
 function buyItem(it){
-  if(it.t==='p'){const p=typeof it.price==='function'?it.price():it.price;if(has(it.id)||S.cash<p)return;S.cash-=p;S.owned[it.id]=true;log('good',`Куплено: ${it.name}.`);blip(880,.1);if(it.id==='copilot')log('ping','@manager: о, ты теперь в 2 раза быстрее? Отлично, вот ещё задачи');return;}
-  if(it.t==='t'){S[it.id]=!S[it.id];log('sys',`${it.name}: ${S[it.id]?'вкл':'выкл'}.`);blip(660,.06);return;}
-  const p=it.price?it.price():0;if(it.ok&&!it.ok())return;if(S.cash<p)return;S.cash-=p;it.buy();blip(780,.07);
+  if(it.t==='p'){const p=typeof it.price==='function'?it.price():it.price;if(has(it.id)||S.cash<p)return;S.cash-=p;S.owned[it.id]=true;log('good',`Куплено: ${it.name}.`);track('purchase',{item:it.id,price:Math.round(p)});blip(880,.1);if(it.id==='copilot')log('ping','@manager: о, ты теперь в 2 раза быстрее? Отлично, вот ещё задачи');return;}
+  if(it.t==='t'){S[it.id]=!S[it.id];track('toggle',{item:it.id,on:S[it.id]});log('sys',`${it.name}: ${S[it.id]?'вкл':'выкл'}.`);blip(660,.06);return;}
+  const p=it.price?it.price():0;if(it.ok&&!it.ok())return;if(S.cash<p)return;track('purchase',{item:it.id,price:Math.round(p)});S.cash-=p;it.buy();blip(780,.07);
 }
 
 /* ---------- promotion & events ---------- */
 function promo(){
   const nx=GR[S.grade+1];const cur=GR[S.grade];
   modal(`Повышение: ${nx.n}`,`<p>Тебя зовут на новую роль. Больше денег, больше созвонов, больше ответственности.</p><div class="stats"><span>Зарплата</span><b>${fmt(cur.sal*S.salaryMult)} → ${fmt(nx.sal*S.salaryMult)}</b><span>Усталость</span><b>×1.3</b><span>Базовые расходы</span><b>${fmt(12000*(1+.25*S.grade))} → ${fmt(12000*(1+.25*(S.grade+1)))}</b></div><p style="margin-top:10px;color:var(--muted)">Новый уровень — новые привычки. Цель FIRE тоже вырастет.</p>`,[
-    {l:'Принять повышение',primary:true,f(){S.grade++;S.xp=0;log('good',`Ты теперь ${GR[S.grade].n}!`);jingle([523,659,784,1046]);}},
-    {l:'Отказаться и остаться на месте',f(){S.xp=need()*.4;S.declined++;log('sys','Ты отказался от повышения. Менеджер удивлён.');}}
+    {l:'Принять повышение',primary:true,f(){track('promotion',{to:nx.n,accepted:true});S.grade++;S.xp=0;log('good',`Ты теперь ${GR[S.grade].n}!`);jingle([523,659,784,1046]);}},
+    {l:'Отказаться и остаться на месте',f(){track('promotion',{to:nx.n,accepted:false});S.xp=need()*.4;S.declined++;log('sys','Ты отказался от повышения. Менеджер удивлён.');}}
   ]);
 }
 const EVENTS=[
@@ -331,7 +365,7 @@ function triggerEvent(){
   const ws=pool.map(e=>typeof e.w==='function'?e.w():e.w);let r=Math.random()*ws.reduce((a,b)=>a+b,0);
   let ev=pool[0];for(let i=0;i<pool.length;i++){r-=ws[i];if(r<=0){ev=pool[i];break;}}
   lastEvent=ev.id;ev.pre&&ev.pre();blip(330,.15,'triangle',.06);
-  modal(ev.title,`<p>${esc(typeof ev.text==='function'?ev.text():ev.text)}</p>`,ev.ch);
+  modal(ev.title,`<p>${esc(typeof ev.text==='function'?ev.text():ev.text)}</p>`,ev.ch.map((c,i)=>({l:c.l,f(){track('event_choice',{event:ev.id,choice:i+1,label:c.l});c.f&&c.f();}})));
 }
 
 /* ---------- endings ---------- */
@@ -354,23 +388,25 @@ function ending(kind){
     else{title='Бедная пенсия';text='Ты доработал до 67, но накоплений не хватает. Будешь вспоминать, как чинил прод в пятницу ночью.';}
     big='Пенсия в 67';jingle([392,440,392,330]);
   }
+  track('game_over',{ending:kind,title,net_worth:Math.round(worth),fire_target:Math.round(fire()),clicks:S.clicks,years:+years});flushSession();
   const L=legacy();const inherit=Math.max(0,Math.min(worth*.05,60000));
   const best=kind==='fire'&&(L.best==null||S.age<L.best)?+age:L.best;
   store.set(LEG,{gen:L.gen,cash:L.cash,best});
   modal(title,`<div class="big">${esc(big)}</div><p>${esc(text)}</p><div class="stats"><span>Лет в профессии</span><b>${years}</b><span>Грейд</span><b>${GR[S.grade].n}</b><span>Капитал</span><b>${fmt(worth)}</b><span>Цель FIRE</span><b>${fmt(fire())}</b><span>Кликов</span><b>${S.clicks}</b><span>Поколение</span><b>${S.gen}</b>${best!=null?`<span>Рекорд: пенсия в</span><b>${best}</b>`:''}</div>`,[
-    {l:`Играть за наследника: старт с ${fmt(500+inherit)}, опыт +15%`,primary:true,f(){store.set(LEG,{gen:L.gen+1,cash:inherit,best});newGame();}},
-    {l:'Начать с нуля',f(){store.set(LEG,{gen:1,cash:0,best});newGame();}}
+    {l:`Играть за наследника: старт с ${fmt(500+inherit)}, опыт +15%`,primary:true,f(){store.set(LEG,{gen:L.gen+1,cash:inherit,best});newGame();track('game_start',{mode:'heir'});}},
+    {l:'Начать с нуля',f(){store.set(LEG,{gen:1,cash:0,best});newGame();track('game_start',{mode:'restart'});}}
   ]);
 }
 
 /* ---------- loop ---------- */
 function tick(dt){
   if(!S.started||S.over||modalOpen||S.paused)return;
+  sessPlay+=dt;
   S.age+=dt/YEAR;
   const flow=((salary()+petInc(S.pet))-expenses())/YEAR*dt;
   if(S.auto&&flow>0){S.etf+=flow*.5;S.cash+=flow*.5;}else S.cash+=flow;
   S.etf*=Math.pow(1+(S.buffs.recovery?.16:.07),dt/YEAR);
-  S.xp+=.1*dt;
+  S.xp+=passiveXp()*dt;
   S.energy=Math.min(maxE(),S.energy+(regen()-drain())*dt);
   S.coffeeTol=Math.min(1,S.coffeeTol+.012*dt);
   if(S.coffeeShow>0)S.coffeeShow-=dt;
@@ -378,8 +414,8 @@ function tick(dt){
   if(S.energy<=0){S.energy=0;ending('sleep');return;}
   if(S.age>=END_AGE){ending('age');return;}
   if(S.startup&&S.age>=S.startup.until){S.startup=null;
-    if(Math.random()<.2){const x=1500000;S.cash+=x;S.unicorn=true;modal('Экзит!',`<p>Стартап купила корпорация. Твой опцион: <b>${fmt(x)}</b>.</p>`,[{l:'Ура',primary:true}]);jingle([523,659,784,1046,1318,1568]);}
-    else modal('Стартап закрылся','<p>Деньги кончились, друг уехал на ретрит. Ты возвращаешься на обычную зарплату.</p>',[{l:'Ну что ж',primary:true}]);
+    if(Math.random()<.2){track('startup_result',{exit:true});const x=1500000;S.cash+=x;S.unicorn=true;modal('Экзит!',`<p>Стартап купила корпорация. Твой опцион: <b>${fmt(x)}</b>.</p>`,[{l:'Ура',primary:true}]);jingle([523,659,784,1046,1318,1568]);}
+    else{track('startup_result',{exit:false});modal('Стартап закрылся','<p>Деньги кончились, друг уехал на ретрит. Ты возвращаешься на обычную зарплату.</p>',[{l:'Ну что ж',primary:true}]);}
     return;}
   if(S.grade<GR.length-1&&S.xp>=need()){promo();return;}
   S.eventT-=dt;if(S.eventT<=0){S.eventT=32+Math.random()*28;triggerEvent();return;}
@@ -400,7 +436,7 @@ function renderHUD(){
   const net=regen()-drain();
   $('eNum').textContent=`${Math.round(S.energy)} ${net>=0?'+':'−'}${Math.abs(net).toFixed(1)}/с`;
   const low=S.energy/me<.25;$('vign').style.boxShadow=low?`inset 0 0 ${30+Math.sin(performance.now()/150)*14}px 6px var(--energy)`:'inset 0 0 0 0 transparent';
-  if(S.grade<GR.length-1){const p=Math.min(1,S.xp/need());$('xBar').style.width=p*100+'%';$('xNum').textContent=Math.round(p*100)+'%';}else{$('xBar').style.width='100%';$('xNum').textContent='MAX';}
+  if(S.grade<GR.length-1){const p=Math.min(1,S.xp/need());$('xBar').style.width=p*100+'%';$('xNum').textContent=`${Math.round(p*100)}% +${passiveXp().toFixed(2)}/с`;}else{$('xBar').style.width='100%';$('xNum').textContent='MAX';}
   const f=fire(),w=nw();$('fBar').style.width=Math.max(0,Math.min(1,w/f))*100+'%';$('fNum').textContent=`${fmt(w)} / ${fmt(f)}`;
   $('retire').hidden=!(S.started&&!S.over&&w>=f);
 }
@@ -533,8 +569,8 @@ function frame(now){
 function intro(){
   const L=legacy();const saved=store.get(SAVE);
   const ch=[];
-  if(saved&&saved.started&&!saved.over)ch.push({l:`Продолжить карьеру (${saved.age.toFixed(1)} лет, ${GR[saved.grade].n})`,primary:true,f(){S=Object.assign(fresh(),saved);S.paused=false;afterLoad();}});
-  ch.push({l:L.gen>1?`Начать: поколение ${L.gen}`:'Начать карьеру',primary:!ch.length,f(){S=fresh();S.started=true;afterLoad();log('sys',L.gen>1?`Поколение ${L.gen}. Родители оставили ${fmt(L.cash)} и совет: «не повторяй наших ошибок».`:'Первый день в Synergix. Тебе выдали ноутбук и пропуск.');log('ping','@manager: добро пожаловать! онбординг в Confluence, удачи');}});
+  if(saved&&saved.started&&!saved.over)ch.push({l:`Продолжить карьеру (${saved.age.toFixed(1)} лет, ${GR[saved.grade].n})`,primary:true,f(){S=Object.assign(fresh(),saved);S.paused=false;afterLoad();track('game_start',{mode:'continue'});}});
+  ch.push({l:L.gen>1?`Начать: поколение ${L.gen}`:'Начать карьеру',primary:!ch.length,f(){S=fresh();S.started=true;afterLoad();track('game_start',{mode:L.gen>1?'new_generation':'new'});log('sys',L.gen>1?`Поколение ${L.gen}. Родители оставили ${fmt(L.cash)} и совет: «не повторяй наших ошибок».`:'Первый день в Synergix. Тебе выдали ноутбук и пропуск.');log('ping','@manager: добро пожаловать! онбординг в Confluence, удачи');}});
   modal('Ctrl+Alt+Retire',`<p>Тебе 22, и сегодня твой первый день в компании <b>Synergix</b>. Опенспейс, один монитор, кактус на столе. Ты пришёл «на пару лет набраться опыта».</p><p>Зарплата капает сама, но медленно. <b>Кликай по герою</b>, чтобы работать в полную силу: каждый клик даёт деньги и опыт, но <b>стоит энергии</b>. Энергия и так понемногу тает, быстрее с каждым повышением и с возрастом. Восстанавливай её сном, кофе и спортом. Упадёт до нуля, и герой уснёт навсегда.</p><p>Цель: накопить <b>25 годовых расходов</b> и уйти на пенсию как можно раньше. Каждая покупка для комфорта отодвигает финиш.</p>${L.best!=null?`<p style="color:var(--muted)">Рекорд семьи: пенсия в ${L.best}.</p>`:''}`,ch);
 }
 function afterLoad(){S.started=true;S.over=false;renderLog();renderShop(true);if(S.clicks>0)$('tapHint').hidden=true;}
