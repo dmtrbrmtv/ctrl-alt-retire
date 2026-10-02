@@ -313,7 +313,11 @@ ru:{
   than:d=>`, чем ${d}`, sameAs:d=>`столько же, сколько ${d}`,
   savedLine:d=>`Это сохранённый итог от ${d} — хочешь пройти путь заново и сравнить?`,
   savedNote:'Сохранённый результат',
-  walkNow:'Пройти путь'
+  walkNow:'Пройти путь',
+  share:'Поделиться', saveImg:'Сохранить картинку', imgSaved:'Картинка сохранена',
+  sharedFallback:'Картинка скачана, текст скопирован', textCopied:'Текст скопирован',
+  imgNote:'На картинке только итог и дата — без ответов на вопросы.',
+  cardSite:'ctrlaltretire.com/lighthouse'
 },
 en:{
   brand:'Lighthouse Path', title:'Lighthouse Path', sub:'9 questions · about 3 minutes',
@@ -411,7 +415,11 @@ en:{
   than:d=>` than on ${d}`, sameAs:d=>`the same as on ${d}`,
   savedLine:d=>`This is your saved result from ${d}. Want to walk the path again and compare?`,
   savedNote:'Saved result',
-  walkNow:'Walk the path'
+  walkNow:'Walk the path',
+  share:'Share', saveImg:'Save image', imgSaved:'Image saved',
+  sharedFallback:'Image downloaded, text copied', textCopied:'Text copied',
+  imgNote:'The image shows only the result and the date — none of your answers.',
+  cardSite:'ctrlaltretire.com/lighthouse'
 }};
 const LEVEL_COLORS=['#6fb7b8','#9cc47a','#f2c14e','#f0904a','#e5636a'];
 
@@ -724,6 +732,62 @@ function goEnd(){
   S.final=true; S.phase='end'; S.idx=9;
   show({who:L().keeper,text:L().endLine,choices:[{label:L().seeResult,act:()=>showResult(true)}]});
 }
+/* ---------- result image & sharing ---------- */
+// A 1080x1350 picture of the result: the lit lighthouse scene on top, the paper card below. Score, level and date only.
+function wrapText(g,text,maxW){const words=String(text).split(' '),lines=[];let line='';for(const w of words){const tst=line?line+' '+w:w;if(g.measureText(tst).width>maxW&&line){lines.push(line);line=w;}else line=tst;}if(line)lines.push(line);return lines;}
+async function cardBlob(){
+  const t=L(), c=cur(), s=c.s, lv=levelOf(s);
+  const disp=plainFont?'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif':'"Press Start 2P", monospace';
+  const body=plainFont?'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif':'"Pixelify Sans", sans-serif';
+  try{ await document.fonts.load('40px "Press Start 2P"','PHQ'); await document.fonts.load('600 40px "Pixelify Sans"','PHQ'); }catch(e){}
+  const W2=1080,H2=1350,k=document.createElement('canvas');k.width=W2;k.height=H2;const g=k.getContext('2d');g.imageSmoothingEnabled=false;
+  g.fillStyle='#0e0f22';g.fillRect(0,0,W2,H2);
+  // scene
+  const sx=60,sy=60,sw=960,sh=576;
+  g.fillStyle='#f4ead6';g.fillRect(sx-6,sy-6,sw+12,sh+12);g.fillStyle='#0e0f22';g.fillRect(sx-3,sy-3,sw+6,sh+6);
+  g.drawImage(cv,0,0,cv.width,cv.height,sx,sy,sw,sh);
+  // paper card
+  const cx0=60,cy0=680,cw=960,chh=560;
+  g.fillStyle='#000';g.fillRect(cx0+12,cy0+12,cw,chh);g.fillStyle='#f4ead6';g.fillRect(cx0,cy0,cw,chh);
+  g.fillStyle='#0e0f22';g.lineWidth=6;g.strokeStyle='#0e0f22';g.strokeRect(cx0+3,cy0+3,cw-6,chh-6);
+  const ink='#0e0f22',mute='#5b5480',P=48;
+  g.textBaseline='alphabetic';
+  g.font=`20px ${disp}`;g.fillStyle=mute;g.fillText('PHQ-9',cx0+P,cy0+64);
+  const dt=fmtDate(c.date);g.textAlign='right';g.fillText(dt,cx0+cw-P,cy0+64);g.textAlign='left';
+  g.font=`30px ${disp}`;g.fillStyle=ink;g.fillText(t.resTitle,cx0+P,cy0+122);
+  g.font=`${plainFont?'800 ':''}96px ${disp}`;g.fillText(String(s),cx0+P,cy0+240);
+  const sw2=g.measureText(String(s)).width;g.font=`26px ${disp}`;g.fillStyle=mute;g.fillText(t.of,cx0+P+sw2+20,cy0+240);
+  // scale with marker
+  const bx=cx0+P,by=cy0+282,bw=cw-P*2,bh=30,segs=[5,5,5,5,8];let x=bx;
+  segs.forEach((w,i)=>{const ww=bw*w/28;g.fillStyle=LEVEL_COLORS[i];g.fillRect(x,by,ww,bh);x+=ww;});
+  g.lineWidth=6;g.strokeRect(bx,by,bw,bh);
+  const mx=bx+bw*(s+.5)/28;g.fillStyle=ink;g.beginPath();g.moveTo(mx-14,by-24);g.lineTo(mx+14,by-24);g.lineTo(mx,by-6);g.closePath();g.fill();
+  // level + description
+  g.fillStyle=LEVEL_COLORS[lv];g.fillRect(cx0+P,cy0+352,30,30);g.lineWidth=5;g.strokeRect(cx0+P,cy0+352,30,30);
+  g.fillStyle=ink;g.font=`${plainFont?'700 ':''}24px ${disp}`;g.fillText(t.levels[lv],cx0+P+48,cy0+378);
+  g.font=`34px ${body}`;g.fillStyle='#2a2540';
+  wrapText(g,t.desc[lv],cw-P*2).slice(0,3).forEach((ln,i)=>g.fillText(ln,cx0+P,cy0+440+i*44));
+  // footer
+  g.font=`22px ${disp}`;g.fillStyle='#ffd166';g.fillText(t.brand,60,1310);
+  g.font=`26px ${body}`;g.fillStyle='#aaa4c8';g.textAlign='right';g.fillText(t.cardSite,1020,1310);g.textAlign='left';
+  return await new Promise(r=>k.toBlob(r,'image/png'));
+}
+function downloadBlob(b){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='lighthouse-path.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
+async function copyText(text){try{await navigator.clipboard.writeText(text);return true;}catch(e){return false;}}
+// Native share sheet when available (text, plus the image if allowed); otherwise download the image and copy the text
+async function shareOut(btn,text,withImg){
+  const t=L(), orig=btn.textContent;
+  const flash=m=>{btn.textContent=m;setTimeout(()=>btn.textContent=orig,2400);};
+  let blob=null; if(withImg){ try{ blob=await cardBlob(); }catch(e){} }
+  if(navigator.share){
+    const data={text};
+    if(blob){ const f=new File([blob],'lighthouse-path.png',{type:'image/png'}); if(navigator.canShare&&navigator.canShare({files:[f]})) data.files=[f]; }
+    try{ await navigator.share(data); return; }catch(e){ if(e&&e.name==='AbortError') return; }
+  }
+  if(blob) downloadBlob(blob);
+  const ok=await copyText(text);
+  flash(blob?t.sharedFallback:(ok?t.textCopied:t.selected));
+}
 function loadHist(){ try{ const h=JSON.parse(localStorage.getItem('lh-history')||'[]'); return Array.isArray(h)?h.filter(e=>e&&typeof e.s==='number'):[]; }catch(e){ return []; } }
 function saveHist(){ try{ const h=loadHist(); h.push({t:S.doneAt.getTime(),s:score(),df:S.ans[9]}); localStorage.setItem('lh-history',JSON.stringify(h.slice(-30))); }catch(e){} }
 const ymd=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
@@ -772,7 +836,7 @@ function renderResult(){
     `<div class="scale-l">`+segs.map((w,i)=>`<span style="flex:${w}">${labels[i]}</span>`).join('')+`</div>`+
     `<p class="level"><i style="background:${LEVEL_COLORS[lv]}"></i>${esc(t.levels[lv])}</p><p>${esc(t.desc[lv])}</p>`+
     (c.df!=null?`<p class="diff">${esc(t.diff)} ${esc(t.a10[c.df].toLowerCase())}</p>`:'')+(S.view?`<p class="saved-note">${esc(t.savedNote)}</p>`:'')+`</article>`+
-    `<p class="shot">${esc(t.shot)}</p>`;
+    `<div class="row"><button class="btn" type="button" id="save-img">${esc(t.saveImg)}</button><span class="shot" style="margin:0">${esc(t.imgNote)}</span></div>`;
   if(!S.view){
     h+=`<section class="panel"><h3>${esc(t.saveTitle)}</h3><p>${esc(t.saveNote)}</p>`+
       `<input class="permalink" id="perm" readonly value="${esc(permalink(c))}" aria-label="${esc(t.saveTitle)}">`+
@@ -790,14 +854,19 @@ function renderResult(){
   h+=`<section class="panel"><h3>${esc(t.shareTitle)}</h3><p>${esc(t.shareNote)}</p>`+
     `<label class="check"><input type="checkbox" id="inc-score" ${S.incScore?'checked':''}> ${esc(t.incScore)}</label>`+
     `<textarea id="fam-msg" aria-label="${esc(t.shareTitle)}">${esc(famText())}</textarea>`+
-    `<div class="row"><button class="btn primary" type="button" data-copy="fam-msg">${esc(t.copy)}</button>`+
+    `<div class="row"><button class="btn primary" type="button" id="fam-share">${esc(t.share)}</button><button class="btn" type="button" data-copy="fam-msg">${esc(t.copy)}</button>`+
     `<a class="btn" id="fam-tg" target="_blank" rel="noopener">Telegram</a><a class="btn" id="fam-wa" target="_blank" rel="noopener">WhatsApp</a></div></section>`;
   h+=`<section class="panel"><h3>${esc(t.inviteTitle)}</h3><p>${esc(t.inviteNote)}</p>`+
     `<textarea id="inv-msg" aria-label="${esc(t.inviteTitle)}">${esc(t.invite(INVITE_URL))}</textarea>`+
-    `<div class="row"><button class="btn primary" type="button" data-copy="inv-msg">${esc(t.copy)}</button>`+
+    `<div class="row"><button class="btn primary" type="button" id="inv-share">${esc(t.share)}</button><button class="btn" type="button" data-copy="inv-msg">${esc(t.copy)}</button>`+
     `<a class="btn" id="inv-tg" target="_blank" rel="noopener">Telegram</a><a class="btn" id="inv-wa" target="_blank" rel="noopener">WhatsApp</a></div></section>`;
   h+=`<p class="about">${esc(t.about)}</p>`;
   resEl.innerHTML=h;
+  const flash=(b,msg)=>{const o=b.textContent;b.textContent=msg;setTimeout(()=>b.textContent=o,2200);};
+  $('save-img').addEventListener('click',async e=>{const b=e.currentTarget;try{downloadBlob(await cardBlob());flash(b,t.imgSaved);}catch(err){}});
+  // The result image goes along only when "Include my result" is checked
+  $('fam-share').addEventListener('click',e=>shareOut(e.currentTarget,$('fam-msg').value,S.incScore));
+  $('inv-share').addEventListener('click',e=>shareOut(e.currentTarget,$('inv-msg').value,false));
   const hc=$('hist-clear'); if(hc) hc.addEventListener('click',()=>{ try{localStorage.removeItem('lh-history');}catch(e){} hc.textContent=t.histCleared; hc.disabled=true; });
   ['sos','fam','inv'].forEach(k=>{ const ta=$(k+'-msg'); if(!ta) return; const upd=()=>{const l=shareLinks(ta.value); $(k+'-tg').href=l.tg; $(k+'-wa').href=l.wa;}; ta.addEventListener('input',upd); upd(); });
   const inc=$('inc-score'); inc.addEventListener('change',()=>{ S.incScore=inc.checked; const ta=$('fam-msg'); ta.value=famText(); ta.dispatchEvent(new Event('input')); });
