@@ -316,7 +316,6 @@ const ACH=[
  {id:'zen',t:T('Дзен-мастер','Zen master'),d:T('Пенсия меньше чем за 300 кликов','Retire with fewer than 300 clicks')},
  {id:'family',t:T('Ячейка общества','Family person'),d:T('Свадьба и ребёнок','Get married and have a kid')},
  {id:'dynasty',t:T('Династия','Dynasty'),d:T('Дожить до третьего поколения','Reach the third generation')},
- {id:'daily',t:T('Ежедневник','Daily grind'),d:T('Завершить челлендж дня','Finish a daily challenge')},
  {id:'collector',t:T('Коллекционер','Collector'),d:T('Открыть 6 концовок','Unlock 6 endings')}
 ];
 const PINGS=LANG==='en'?['@olga_pm: got 5 minutes?','@olga_pm: quick question','@devops_ivan: who touched prod?','@hr_masha: please fill in the engagement survey','@qa_lena: I can reproduce it, can you?','@olga_pm: could we squeeze in one tiny feature?','@team: who is up for lunch?','@manager: let\'s sync','@designer_kate: I tweaked the mockup a little (all of it)','@jira_bot: 7 issues were assigned to you','@ceo: we are a family','@recruiter_bot: hi! open to new opportunities?','@olga_pm: the deadline was yesterday','@devops_ivan: Friday deploy, what could go wrong','@manager: let\'s move our 1:1 again','@intern_petya: where are the docs?','@qa_lena: bug in prod, but it\'s a feature','@olga_pm: stand-up in 2 minutes','@security: change your password, 14th time'
@@ -352,18 +351,14 @@ const $=id=>document.getElementById(id);
 const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
 let sound=store.get('car_sound')!==false, musicOn=store.get('car_music')!==false;
 function legacy(){return store.get(LEG)||{gen:1,cash:0,best:null};}
-// Things that survive between lives: found endings, achievements, daily results, tutorial
-const meta=Object.assign({endings:{},ach:{},daily:{},tut:false},store.get(META_K)||{});
+// Things that survive between lives: found endings, achievements, tutorial
+const meta=Object.assign({endings:{},ach:{},tut:false},store.get(META_K)||{});
 const saveMeta=()=>store.set(META_K,meta);
 
-function today(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function fresh(daily){const L=daily?{gen:1,cash:0}:legacy();return{gen:L.gen,age:22,cash:500+L.cash,etf:0,bonds:0,crypto:0,cryptoIn:0,yearInv:0,grade:0,xp:0,energy:100,burn:0,burnHit:false,salaryMult:1,owned:{},pet:0,freelance:false,hard:false,auto:false,calm:false,declined:0,coffeeTol:1,coffeeShow:0,coffees:0,vacations:0,buffs:{},startup:null,unicorn:false,startupDone:false,unemployedUntil:0,vacReady:22,eventT:30,pingT:3,clicks:0,lastEvent:'',trait:null,married:false,kids:0,mortgage:false,marathon:false,barista:false,done:{},daily:daily||null,rngN:0,over:false,started:false,paused:false,log:[]};}
+function fresh(){const L=legacy();return{gen:L.gen,age:22,cash:500+L.cash,etf:0,bonds:0,crypto:0,cryptoIn:0,yearInv:0,grade:0,xp:0,energy:100,burn:0,burnHit:false,salaryMult:1,owned:{},pet:0,freelance:false,hard:false,auto:false,calm:false,declined:0,coffeeTol:1,coffeeShow:0,coffees:0,vacations:0,buffs:{},startup:null,unicorn:false,startupDone:false,unemployedUntil:0,vacReady:22,eventT:30,pingT:3,clicks:0,lastEvent:'',trait:null,married:false,kids:0,mortgage:false,marathon:false,barista:false,done:{},over:false,started:false,paused:false,log:[]};}
 
 /* ---------- randomness ---------- */
-// Daily challenge: event rolls come from a seeded generator so everyone gets the same day; the draw count is saved so a reload keeps the sequence
-let rnd=Math.random;
-function seeded(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}let a=h>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-function setRng(){if(!S.daily){rnd=Math.random;return;}const g=seeded('car-'+S.daily);for(let i=0;i<S.rngN;i++)g();rnd=()=>{S.rngN++;return g();};}
+const rnd=Math.random;
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 
 /* ---------- economy ---------- */
@@ -409,7 +404,7 @@ function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();r
 // Sends to PostHog on the live site; elsewhere just logs to the console
 let sessClicks=0,sessPlay=0;
 function track(name,props,opts){
-  const p=Object.assign(S?{age:+S.age.toFixed(1),grade:gradeName(),gen:S.gen,daily:!!S.daily}:{},{v:VERSION,lang:LANG,speed},props);
+  const p=Object.assign(S?{age:+S.age.toFixed(1),grade:gradeName(),gen:S.gen}:{},{v:VERSION,lang:LANG,speed},props);
   try{const ph=window.posthog;if(ph&&typeof ph.capture==='function')ph.capture(name,p,opts);else console.debug('[track]',name,p);}catch(e){}
 }
 // Clicks and playtime are batched into one event whenever the tab is hidden or closed
@@ -612,20 +607,14 @@ function ending(kind){
   const E=ENDINGS.find(e=>e.id===id);
   const isNew=!meta.endings[id];meta.endings[id]=(meta.endings[id]||0)+1;
   if(kind==='fire'){if(S.age<45)unlock('fire45');if(S.age<35)unlock('fire35');if(S.coffees===0)unlock('decaf');if(S.clicks<300)unlock('zen');}
-  if(S.daily){unlock('daily');const d=meta.daily[S.daily]||{plays:0,best:null};d.plays++;if(kind==='fire'&&(d.best==null||age<d.best))d.best=age;meta.daily[S.daily]=d;}
-  if(Object.keys(meta.endings).length>=6)unlock('collector');
+  if(ENDINGS.filter(x=>meta.endings[x.id]).length>=6)unlock('collector');
   saveMeta();
   const big=kind==='sleep'?'GAME OVER':kind==='fire'?T(`Пенсия в ${age}`,`Retired at ${age}`):T('Пенсия в 67','Retired at 67');
   if(kind==='sleep')jingle([392,330,262,196]);else if(kind==='fire')jingle([523,659,784,1046,1318]);else jingle([392,440,392,330]);
   track('game_over',{ending:id,kind,new_ending:isNew,net_worth:Math.round(worth),fire_target:Math.round(fire()),clicks:S.clicks,years});
-  const res={id,kind,age,big,title:E.t,grade:gradeName(),worth,gen:S.gen,daily:S.daily};
-  let best=null,choices;
-  if(S.daily){
-    best=meta.daily[S.daily].best;
-    choices=[{l:T('Поделиться результатом','Share your result'),cls:'share',keep:true,f(){shareResult(res);}},
-      {l:T('Челлендж дня ещё раз','Retry the daily challenge'),primary:true,f(){startDaily();}},
-      {l:T('Обычная игра','Regular game'),f(){newGame();track('game_start',{mode:'new'});}}];
-  } else {
+  const res={id,kind,age,big,title:E.t,grade:gradeName(),worth,gen:S.gen};
+  let best,choices;
+  {
     const L=legacy();const inherit=Math.max(0,Math.min(worth*.05,60000));
     best=kind==='fire'&&(L.best==null||S.age<L.best)?age:L.best;
     store.set(LEG,{gen:L.gen,cash:L.cash,best});
@@ -635,7 +624,7 @@ function ending(kind){
       {l:T('Начать с нуля','Start from scratch'),f(){store.set(LEG,{gen:1,cash:0,best});newGame();track('game_start',{mode:'restart'});}}];
   }
   const found=Object.keys(meta.endings).length;
-  modal(E.t,`${isNew?`<span class="newEnd">${T('НОВАЯ КОНЦОВКА','NEW ENDING')} ${found}/${ENDINGS.length}</span>`:''}<div class="big">${esc(big)}</div><p>${esc(E.x(age))}</p><div class="stats"><span>${T('Лет в профессии','Years worked')}</span><b>${years}</b><span>${T('Грейд','Grade')}</span><b>${esc(gradeName())}</b><span>${T('Капитал','Net worth')}</span><b>${fmt(worth)}</b><span>${T('Цель FIRE','FIRE goal')}</span><b>${fmt(fire())}</b><span>${T('Кликов','Clicks')}</span><b>${S.clicks}</b><span>${S.daily?T('Челлендж','Challenge'):T('Поколение','Generation')}</span><b>${S.daily||S.gen}</b>${best!=null?`<span>${S.daily?T('Рекорд дня: пенсия в','Best today: retired at'):T('Рекорд: пенсия в','Record: retired at')}</span><b>${best}</b>`:''}</div>`,choices);
+  modal(E.t,`${isNew?`<span class="newEnd">${T('НОВАЯ КОНЦОВКА','NEW ENDING')} ${found}/${ENDINGS.length}</span>`:''}<div class="big">${esc(big)}</div><p>${esc(E.x(age))}</p><div class="stats"><span>${T('Лет в профессии','Years worked')}</span><b>${years}</b><span>${T('Грейд','Grade')}</span><b>${esc(gradeName())}</b><span>${T('Капитал','Net worth')}</span><b>${fmt(worth)}</b><span>${T('Цель FIRE','FIRE goal')}</span><b>${fmt(fire())}</b><span>${T('Кликов','Clicks')}</span><b>${S.clicks}</b><span>${T('Поколение','Generation')}</span><b>${S.gen}</b>${best!=null?`<span>${T('Рекорд: пенсия в','Record: retired at')}</span><b>${best}</b>`:''}</div>`,choices);
 }
 // Heirs pick one of three random traits, then may keep one item from the parents' life
 function pickHeir(L,inherit,best,prevOwned){
@@ -665,7 +654,7 @@ async function shareResult(res){
     const words=res.big.split(' ');const l1=words.slice(0,-1).join(' ')||res.big,l2=words.length>1?words[words.length-1]:'';
     txt(l1,48,190,'38px "Press Start 2P"',bigCol,4);if(l2)txt(l2,48,250,'38px "Press Start 2P"',bigCol,4);
     txt(res.title,48,318,'600 32px "Pixelify Sans"','#efeaff');
-    const rows=[[T('Грейд','Grade'),res.grade],[T('Капитал','Net worth'),fmt(res.worth)],res.daily?[T('Челлендж дня','Daily challenge'),res.daily]:[T('Поколение','Generation'),String(res.gen)]];
+    const rows=[[T('Грейд','Grade'),res.grade],[T('Капитал','Net worth'),fmt(res.worth)],[T('Поколение','Generation'),String(res.gen)]];
     rows.forEach(([k,v],i)=>{txt(k,48,378+i*40,'26px "Pixelify Sans"','#a69fd8');txt(v,250,378+i*40,'600 26px "Pixelify Sans"','#efeaff');});
     txt(T('А ты во сколько уйдёшь?','When will you retire?'),48,560,'600 26px "Pixelify Sans"','#ffb84d');
     txt('ctrlaltretire.com',560,560,'18px "Press Start 2P"','#a69fd8');
@@ -734,7 +723,7 @@ function renderHUD(){
   const sal=salary();$('hInc').textContent=S.age<S.unemployedUntil?T('поиск…','job hunt…'):fmt(sal+petInc(S.pet));
   $('hExp').textContent=fmt(expenses());
   $('hClick').textContent=fmt(clickGain());$('hClickE').textContent=T(`−${clickCost().toFixed(1)} энергии`,`−${clickCost().toFixed(1)} energy`);
-  $('hGen').textContent=S.daily?T('день','daily'):S.gen;
+  $('hGen').textContent=S.gen;
   const tr=TRAITS.find(t=>t.id===S.trait);$('hTrait').textContent=tr?tr.n:'';
   const me=maxE();$('eBar').style.width=(S.energy)+'%';$('eCap').style.width=(100-me)+'%';
   const net=regen()-drain();
@@ -811,8 +800,7 @@ function updateTut(dt){
 function showCollection(){
   const e=ENDINGS.map(x=>meta.endings[x.id]?`<div class="card got"><b>${esc(x.t)}</b><span>×${meta.endings[x.id]}</span></div>`:`<div class="card locked"><b>???</b><span>${esc(x.h)}</span></div>`).join('');
   const a=ACH.map(x=>meta.ach[x.id]?`<div class="card got"><b>★ ${esc(x.t)}</b><span>${esc(x.d)}</span></div>`:`<div class="card locked"><b>☆ ${esc(x.t)}</b><span>${esc(x.d)}</span></div>`).join('');
-  const d=meta.daily[today()];
-  $('cBody').innerHTML=`<h3>${T('Концовки','Endings')} ${Object.keys(meta.endings).length}/${ENDINGS.length}</h3><div class="cgrid">${e}</div><h3>${T('Достижения','Achievements')} ${Object.keys(meta.ach).length}/${ACH.length}</h3><div class="cgrid">${a}</div><h3>${T('Челлендж дня','Daily challenge')}</h3><p>${d?T(`Сегодня сыграно ${d.plays} раз. Лучший результат: ${d.best!=null?'пенсия в '+d.best:'пока без пенсии'}.`,`Played ${d.plays} times today. Best: ${d.best!=null?'retired at '+d.best:'no retirement yet'}.`):T('Сегодня ещё не сыгран. У всех игроков один и тот же расклад случайностей.','Not played yet today. Every player gets the same luck today.')}</p>`;
+  $('cBody').innerHTML=`<h3>${T('Концовки','Endings')} ${Object.keys(meta.endings).length}/${ENDINGS.length}</h3><div class="cgrid">${e}</div><h3>${T('Достижения','Achievements')} ${ACH.filter(x=>meta.ach[x.id]).length}/${ACH.length}</h3><div class="cgrid">${a}</div>`;
   collOpen=true;$('coll').hidden=false;$('cClose').focus();track('collection_open');
 }
 $('cClose').onclick=()=>{collOpen=false;$('coll').hidden=true;};
@@ -938,30 +926,25 @@ function frame(now){
 }
 function startLog(){log('ping',T('@manager: добро пожаловать! онбординг в Confluence, удачи','@manager: welcome aboard! onboarding is in Confluence, good luck'));}
 function intro(){
-  const L=legacy();const saved=store.get(SAVE);const td=today();const d=meta.daily[td];
+  const L=legacy();const saved=store.get(SAVE);
   const ch=[];
-  if(saved&&saved.started&&!saved.over)ch.push({l:T(`Продолжить (${saved.age.toFixed(1)} лет, ${saved.barista?'бариста':GR[saved.grade].n}${saved.daily?', челлендж дня':''})`,`Continue (age ${saved.age.toFixed(1)}, ${saved.barista?'barista':GR[saved.grade].n}${saved.daily?', daily challenge':''})`),primary:true,f(){S=Object.assign(fresh(),saved);S.paused=false;setRng();afterLoad();track('game_start',{mode:'continue'});}});
+  if(saved&&saved.started&&!saved.over)ch.push({l:T(`Продолжить (${saved.age.toFixed(1)} лет, ${saved.barista?'бариста':GR[saved.grade].n})`,`Continue (age ${saved.age.toFixed(1)}, ${saved.barista?'barista':GR[saved.grade].n})`),primary:true,f(){S=Object.assign(fresh(),saved);S.paused=false;delete S.daily;delete S.rngN;afterLoad();track('game_start',{mode:'continue'});}});
   ch.push({l:L.gen>1?T(`Начать: поколение ${L.gen}`,`Start: generation ${L.gen}`):T('Начать карьеру','Start your career'),primary:!ch.length,f(){
-    S=fresh();S.started=true;setRng();afterLoad();track('game_start',{mode:L.gen>1?'new_generation':'new'});
+    S=fresh();S.started=true;afterLoad();track('game_start',{mode:L.gen>1?'new_generation':'new'});
     log('sys',L.gen>1?T(`Поколение ${L.gen}. Родители оставили ${fmt(L.cash)} и совет: «не повторяй наших ошибок».`,`Generation ${L.gen}. Your parents left ${fmt(L.cash)} and some advice: "do not repeat our mistakes".`):T('Первый день в Synergix. Тебе выдали ноутбук и пропуск.','First day at Synergix. You got a laptop and a badge.'));startLog();
     if(!meta.tut){tutStep=0;tutT=0;}}});
-  ch.push({l:T(`Челлендж дня ${td}${d&&d.best!=null?` · рекорд: пенсия в ${d.best}`:''}`,`Daily challenge ${td}${d&&d.best!=null?` · best: retired at ${d.best}`:''}`),f(){startDaily();}});
   modal('Ctrl+Alt+Retire',T(
-    `<p>Тебе 22, и сегодня твой первый день в компании <b>Synergix</b>. Опенспейс, один монитор, кактус на столе. Ты пришёл «на пару лет набраться опыта».</p><p>Зарплата капает сама, но медленно. <b>Кликай по герою</b>, чтобы работать в полную силу: каждый клик даёт деньги и опыт, но <b>стоит энергии</b>. Энергия и так понемногу тает, быстрее с каждым повышением и с возрастом. Долго на низкой энергии — копится выгорание. Упадёт до нуля, и герой уснёт навсегда.</p><p>Цель: накопить <b>25 годовых расходов</b> и уйти на пенсию как можно раньше. Собери все концовки и достижения, а в <b>челлендже дня</b> у всех игроков один и тот же расклад случайностей.</p>`,
-    `<p>You are 22, and today is your first day at <b>Synergix</b>. Open space, one monitor, a cactus on the desk. You came "just for a couple of years to gain experience".</p><p>Your salary trickles in by itself, but slowly. <b>Click the hero</b> to work at full power: each click brings money and XP but <b>costs energy</b>. Energy also drains on its own, faster with each promotion and with age. Running on low energy builds burnout. If energy hits zero, the hero falls asleep for good.</p><p>Goal: save <b>25 years of expenses</b> and retire as early as possible. Collect every ending and achievement, and in the <b>daily challenge</b> every player gets the same luck.</p>`)
+    `<p>Тебе 22, и сегодня твой первый день в компании <b>Synergix</b>. Опенспейс, один монитор, кактус на столе. Ты пришёл «на пару лет набраться опыта».</p><p>Зарплата капает сама, но медленно. <b>Кликай по герою</b>, чтобы работать в полную силу: каждый клик даёт деньги и опыт, но <b>стоит энергии</b>. Энергия и так понемногу тает, быстрее с каждым повышением и с возрастом. Долго на низкой энергии — копится выгорание. Упадёт до нуля, и герой уснёт навсегда.</p><p>Цель: накопить <b>25 годовых расходов</b> и уйти на пенсию как можно раньше. Собери все концовки и достижения.</p>`,
+    `<p>You are 22, and today is your first day at <b>Synergix</b>. Open space, one monitor, a cactus on the desk. You came "just for a couple of years to gain experience".</p><p>Your salary trickles in by itself, but slowly. <b>Click the hero</b> to work at full power: each click brings money and XP but <b>costs energy</b>. Energy also drains on its own, faster with each promotion and with age. Running on low energy builds burnout. If energy hits zero, the hero falls asleep for good.</p><p>Goal: save <b>25 years of expenses</b> and retire as early as possible. Collect every ending and achievement.</p>`)
     +(L.best!=null?`<p style="color:var(--muted)">${T('Рекорд семьи: пенсия в','Family record: retired at')} ${L.best}.</p>`:''),ch);
 }
 function afterLoad(){S.started=true;S.over=false;calmAcc=0;renderLog();renderShop(true);if(S.clicks>0)$('tapHint').hidden=true;}
 function newGame(o={}){
-  S=fresh();S.started=true;if(o.trait)S.trait=o.trait;if(o.heir)S.owned[o.heir]=true;setRng();afterLoad();resetCode();
+  S=fresh();S.started=true;if(o.trait)S.trait=o.trait;if(o.heir)S.owned[o.heir]=true;afterLoad();resetCode();
   log('sys',S.gen>1?T(`Поколение ${S.gen}. Наследство: ${fmt(S.cash-500)}.`,`Generation ${S.gen}. Inheritance: ${fmt(S.cash-500)}.`):T('Новая жизнь. Снова 22, снова Synergix.','A new life. 22 again, Synergix again.'));
   const tr=TRAITS.find(t=>t.id===o.trait);if(tr)log('sys',T(`Черта: ${tr.n} — ${tr.d}.`,`Trait: ${tr.n}, ${tr.d}.`));
   if(o.heir)log('good',T(`Реликвия от родителей: ${ITEMS.find(i=>i.id===o.heir).name}.`,`Heirloom from your parents: ${ITEMS.find(i=>i.id===o.heir).name}.`));
   startLog();
-}
-function startDaily(){
-  S=fresh(today());S.started=true;setRng();afterLoad();resetCode();track('game_start',{mode:'daily'});
-  log('sys',T(`Челлендж дня ${S.daily}. У всех игроков сегодня один и тот же расклад случайностей. Без наследства.`,`Daily challenge ${S.daily}. Every player gets the same luck today. No inheritance.`));startLog();
 }
 
 $('stage').addEventListener('pointerdown',e=>{e.preventDefault();work(e);});
@@ -986,7 +969,7 @@ $('retire').onclick=()=>{if(nw()<fire())return;modal(T('Уволиться на�
 
 function start(data){
   S=(data&&data.S)||fresh();
-  if(data&&data.S){setRng();afterLoad();}else{intro();}
+  if(data&&data.S){afterLoad();}else{intro();}
   label();renderHUD();renderShop(true);requestAnimationFrame(frame);
 }
 // Local testing hook (never exposed on the live site)
