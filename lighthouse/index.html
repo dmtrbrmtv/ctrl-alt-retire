@@ -55,6 +55,34 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .snd[aria-pressed="true"]{color:var(--lamp)}
 .snd svg{width:20px;height:20px;display:block}
 .snd:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+.fnt{min-width:44px;min-height:44px;border:3px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;padding:0 8px;font:600 16px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.fnt[aria-pressed="true"]{color:var(--lamp)}
+.fnt:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+/* Readable font option: system font everywhere, slightly larger where the pixel font was tiny */
+html.plainfont{--display:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+html.plainfont .brand{font-size:15px;font-weight:700;letter-spacing:0}
+html.plainfont .lang button{font-size:13px;font-weight:700}
+html.plainfont .overlay h1{font-weight:800;letter-spacing:0}
+html.plainfont .overlay p{font-size:clamp(11px,2vw,15px);font-weight:600;letter-spacing:0}
+html.plainfont .who{font-size:13px;font-weight:700;letter-spacing:0}
+html.plainfont .choice .key{font-size:12px;font-weight:700}
+html.plainfont .choices.solo .choice{font-size:15px;font-weight:700;letter-spacing:0}
+html.plainfont .back{font-size:13px}
+html.plainfont .lights{font-size:11px;letter-spacing:0}
+html.plainfont .eyebrow{font-size:12px;letter-spacing:0}
+html.plainfont .card h2{font-size:20px;font-weight:700}
+html.plainfont .score b{font-size:52px;font-weight:800}
+html.plainfont .score span{font-size:15px}
+html.plainfont .scale-l{font-size:11px}
+html.plainfont .level{font-size:15px;font-weight:700}
+html.plainfont .panel h3{font-size:15px;font-weight:700;letter-spacing:0}
+html.plainfont .num{font-size:15px;font-weight:600}
+html.plainfont .btn{font-size:14px;font-weight:700;letter-spacing:0}
+.permalink{width:100%;box-sizing:border-box;background:var(--ink);color:var(--text);border:3px solid var(--line);padding:10px;font:inherit;font-size:15px}
+.hist{display:flex;flex-direction:column;gap:6px}
+.hist li::before{background:var(--lamp)!important}
+.hist .dl{color:var(--muted);font-size:15px}
+.saved-note{font-size:15px;color:#4a4468}
 .lang button:focus-visible,.btn:focus-visible,.choice:focus-visible,.back:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
 
 .stage{position:relative;border:3px solid var(--text);box-shadow:inset 0 0 0 3px var(--ink),6px 6px 0 #00000080;background:#000;line-height:0}
@@ -149,6 +177,7 @@ textarea:focus{outline:none;border-color:var(--sea)}
   <header>
     <div class="brand"><i></i><span data-t="brand">Тропа к маяку</span></div>
     <div class="hdr-r">
+      <button class="fnt" id="fnt" type="button" aria-pressed="false">Aa</button>
       <button class="snd" id="snd" type="button" aria-pressed="true"></button>
       <div class="lang" role="group" aria-label="Language">
         <button id="lang-ru" type="button" aria-pressed="true">RU</button>
@@ -273,7 +302,18 @@ ru:{
   shot:'Карточку можно сохранить скриншотом.',
   about:'PHQ-9 (Patient Health Questionnaire-9) — опросник, которым врачи пользуются для скрининга депрессии. Авторы — R. Spitzer, J. Williams, K. Kroenke и коллеги; он свободен для использования. Итог показывает, насколько выражены симптомы, а диагноз ставит только специалист.',
   canvas:'Пиксельный берег и маяк',
-  soundOn:'Звук включён. Выключить', soundOff:'Звук выключен. Включить'
+  soundOn:'Звук включён. Выключить', soundOff:'Включить звук',
+  fontPlain:'Обычный шрифт', fontPixel:'Пиксельный шрифт',
+  saveTitle:'Сохранить результат',
+  saveNote:'Ссылка на этот итог. В ней только балл и дата, без ответов на вопросы. Открой её позже, чтобы вспомнить и сравнить.',
+  histTitle:'Твои прогулки',
+  histNote:'Хранятся только в этом браузере.',
+  histClear:'Очистить историю', histCleared:'История очищена',
+  less:n=>`на ${n} меньше`, more:n=>`на ${n} больше`,
+  than:d=>`, чем ${d}`, sameAs:d=>`столько же, сколько ${d}`,
+  savedLine:d=>`Это сохранённый итог от ${d} — хочешь пройти путь заново и сравнить?`,
+  savedNote:'Сохранённый результат',
+  walkNow:'Пройти путь'
 },
 en:{
   brand:'Lighthouse Path', title:'Lighthouse Path', sub:'9 questions · about 3 minutes',
@@ -360,13 +400,26 @@ en:{
   shot:'Take a screenshot to keep the card.',
   about:'PHQ-9 (Patient Health Questionnaire-9) is a questionnaire doctors use to screen for depression. Developed by R. Spitzer, J. Williams, K. Kroenke and colleagues; free to use. The result shows how strong symptoms are, but only a professional can make a diagnosis.',
   canvas:'Pixel shore and lighthouse',
-  soundOn:'Sound is on. Turn off', soundOff:'Sound is off. Turn on'
+  soundOn:'Sound is on. Turn off', soundOff:'Turn sound on',
+  fontPlain:'Regular font', fontPixel:'Pixel font',
+  saveTitle:'Save your result',
+  saveNote:'A link to this result. It holds only the score and the date, none of your answers. Open it later to remember and compare.',
+  histTitle:'Your walks',
+  histNote:'Stored only in this browser.',
+  histClear:'Clear history', histCleared:'History cleared',
+  less:n=>`${n} lower`, more:n=>`${n} higher`,
+  than:d=>` than on ${d}`, sameAs:d=>`the same as on ${d}`,
+  savedLine:d=>`This is your saved result from ${d}. Want to walk the path again and compare?`,
+  savedNote:'Saved result',
+  walkNow:'Walk the path'
 }};
 const LEVEL_COLORS=['#6fb7b8','#9cc47a','#f2c14e','#f0904a','#e5636a'];
 
 let lang='ru';
 try{ const s=localStorage.getItem('lh-lang'); if(s==='ru'||s==='en') lang=s; else if(!(navigator.language||'').toLowerCase().startsWith('ru')) lang='en'; }catch(e){ if(!(navigator.language||'').toLowerCase().startsWith('ru')) lang='en'; }
 const L=()=>T[lang];
+let plainFont=false; try{ plainFont=localStorage.getItem('lh-font')==='plain'; }catch(e){}
+document.documentElement.classList.toggle('plainfont',plainFont);
 
 /* ---------- state ---------- */
 const S={phase:'title',idx:0,ans:Array(10).fill(null),px:46,target:46,walking:false,onArrive:null,final:false,incScore:true};
@@ -587,10 +640,11 @@ const Music=(()=>{
   }
   return {
     get on(){return on;},
+    get playing(){return on&&running&&!hidden&&!!ctx&&ctx.state==='running';},
     // Called from the "Start walking" click: browsers only allow audio after a user gesture
     start(){ if(!on) return; if(!ctx) build(); ctx.resume(); loops(true); apply(4); },
     setOn(v){ on=v; try{localStorage.setItem('lh-sound',v?'on':'off');}catch(e){}
-      if(v&&S.phase!=='title'){ if(!ctx) build(); ctx.resume(); loops(true); apply(1.5); }
+      if(v){ if(!ctx) build(); ctx.resume(); loops(true); apply(1.5); }
       else if(ctx){ apply(.8); if(!v) setTimeout(()=>{ if(!on){loops(false);ctx.suspend();} },900); } },
     // Dawn: the pad opens up from ~800 to ~2000 Hz as answers are given; notes get a bit more frequent and higher
     setDawn(p){ dawn=p; if(ctx) padF.frequency.setTargetAtTime(800+1200*p,ctx.currentTime,2.5); },
@@ -604,10 +658,14 @@ const Music=(()=>{
     night(){ dawn=0; quiet=1; soft=1; if(ctx){ padF.frequency.setTargetAtTime(800,ctx.currentTime,2.5); apply(2.5); } },
     visibility(h){ hidden=h; if(!ctx||!on) return;
       if(h){ apply(.6); setTimeout(()=>{ if(hidden){loops(false);ctx.suspend();} },700); }
-      else{ ctx.resume(); if(S.phase!=='title') loops(true); apply(1.5); } }
+      else{ ctx.resume(); if(running||S.phase!=='title') loops(true); apply(1.5); } }
   };
 })();
-document.addEventListener('visibilitychange',()=>Music.visibility(document.hidden));
+document.addEventListener('visibilitychange',()=>{ Music.visibility(document.hidden); setTimeout(renderSound,100); });
+// Browsers allow audio only after a user gesture: the first tap or key anywhere starts the music (unless it was switched off)
+function firstGesture(e){ if(e.target&&e.target.closest&&e.target.closest('#snd')) return; if(Music.on&&!Music.playing){ Music.start(); setTimeout(renderSound,150); } }
+document.addEventListener('pointerdown',firstGesture,true);
+document.addEventListener('keydown',firstGesture,true);
 
 /* ---------- dialog ---------- */
 const $=id=>document.getElementById(id);
@@ -666,12 +724,17 @@ function goEnd(){
   S.final=true; S.phase='end'; S.idx=9;
   show({who:L().keeper,text:L().endLine,choices:[{label:L().seeResult,act:()=>showResult(true)}]});
 }
+function loadHist(){ try{ const h=JSON.parse(localStorage.getItem('lh-history')||'[]'); return Array.isArray(h)?h.filter(e=>e&&typeof e.s==='number'):[]; }catch(e){ return []; } }
+function saveHist(){ try{ const h=loadHist(); h.push({t:S.doneAt.getTime(),s:score(),df:S.ans[9]}); localStorage.setItem('lh-history',JSON.stringify(h.slice(-30))); }catch(e){} }
+const ymd=d=>`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+function permalink(c){ return `${INVITE_URL}#r=1.${c.s}.${c.df==null?'x':c.df}.${ymd(c.date)}`; }
 function showResult(scroll){
+  if(scroll&&!S.view&&!S.doneAt){ S.doneAt=new Date(); saveHist(); }
   S.phase='result'; Music.setQuiet(true); renderResult(); resEl.hidden=false;
   show({who:L().keeper,text:L().resultHint,choices:[{label:L().again,act:restart}]});
   if(scroll) setTimeout(()=>resEl.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'}),60);
 }
-function restart(){ Music.night(); S.ans=Array(10).fill(null); S.px=46; S.target=46; S.walking=false; S.final=false; resEl.hidden=true; resEl.innerHTML=''; window.scrollTo(0,0); goIntro(); }
+function restart(){ Music.night(); S.view=null; S.doneAt=null; S.ans=Array(10).fill(null); S.px=46; S.target=46; S.walking=false; S.final=false; resEl.hidden=true; resEl.innerHTML=''; window.scrollTo(0,0); goIntro(); }
 backEl.addEventListener('click',e=>{ e.stopPropagation();
   if(S.phase==='ask'&&S.idx>0){ S.px=stopX(S.idx-1); ask(S.idx-1); }
   else if(S.phase==='ask10'){ S.px=stopX(8); ask(8); } });
@@ -686,10 +749,13 @@ document.addEventListener('keydown',e=>{
 /* ---------- results ---------- */
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function shareLinks(text){ const e=encodeURIComponent(text); return {tg:`https://t.me/share/url?url=${e}`,wa:`https://wa.me/?text=${e}`}; }
-function famText(){ const t=L(), s=score(); return S.incScore?t.msgScore(s,t.levels[levelOf(s)]):t.msgPlain; }
+// The result being shown: the walk just finished, or one opened from a saved link (score, difficulty and date only)
+function cur(){ return S.view||{s:score(),df:S.ans[9],q9:S.ans[8]||0,date:S.doneAt||new Date()}; }
+const fmtDate=d=>d.toLocaleDateString(lang==='ru'?'ru-RU':'en-GB',{day:'numeric',month:'long',year:'numeric'});
+function famText(){ const t=L(), s=cur().s; return S.incScore?t.msgScore(s,t.levels[levelOf(s)]):t.msgPlain; }
 function renderResult(){
-  const t=L(), s=score(), lv=levelOf(s), q9=S.ans[8]||0;
-  const date=new Date().toLocaleDateString(lang==='ru'?'ru-RU':'en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const t=L(), c=cur(), s=c.s, lv=levelOf(s), q9=c.q9;
+  const date=fmtDate(c.date);
   const segs=[5,5,5,5,8], labels=['0–4','5–9','10–14','15–19','20–27'];
   let h='';
   if(q9>0||lv===4){
@@ -705,8 +771,21 @@ function renderResult(){
     `<div class="scale">`+segs.map((w,i)=>`<span style="flex:${w};background:${LEVEL_COLORS[i]}"></span>`).join('')+`<i class="mark" style="left:${((s+.5)/28*100).toFixed(2)}%"></i></div>`+
     `<div class="scale-l">`+segs.map((w,i)=>`<span style="flex:${w}">${labels[i]}</span>`).join('')+`</div>`+
     `<p class="level"><i style="background:${LEVEL_COLORS[lv]}"></i>${esc(t.levels[lv])}</p><p>${esc(t.desc[lv])}</p>`+
-    (S.ans[9]!=null?`<p class="diff">${esc(t.diff)} ${esc(t.a10[S.ans[9]].toLowerCase())}</p>`:'')+`</article>`+
+    (c.df!=null?`<p class="diff">${esc(t.diff)} ${esc(t.a10[c.df].toLowerCase())}</p>`:'')+(S.view?`<p class="saved-note">${esc(t.savedNote)}</p>`:'')+`</article>`+
     `<p class="shot">${esc(t.shot)}</p>`;
+  if(!S.view){
+    h+=`<section class="panel"><h3>${esc(t.saveTitle)}</h3><p>${esc(t.saveNote)}</p>`+
+      `<input class="permalink" id="perm" readonly value="${esc(permalink(c))}" aria-label="${esc(t.saveTitle)}">`+
+      `<div class="row"><button class="btn primary" type="button" data-copy="perm">${esc(t.copy)}</button></div></section>`;
+  }
+  const hist=loadHist();
+  if(hist.length>1||(S.view&&hist.length)){
+    const prev=S.view?null:hist[hist.length-2];
+    let cmp='';
+    if(prev){ const d=s-prev.s, pd=fmtDate(new Date(prev.t)); cmp=`<p>${esc(s)} ${esc(t.of)} — ${esc(d===0?t.sameAs(pd):(d<0?t.less(-d):t.more(d))+t.than(pd))}</p>`; }
+    h+=`<section class="panel"><h3>${esc(t.histTitle)}</h3>${cmp}<ul class="hist">`+hist.slice(-8).reverse().map(e=>`<li><span><span class="dl">${esc(fmtDate(new Date(e.t)))}</span> · <b>${e.s}</b> ${esc(t.of)} · ${esc(t.levels[levelOf(e.s)])}</span></li>`).join('')+
+      `</ul><p class="about">${esc(t.histNote)}</p><div class="row"><button class="btn" type="button" id="hist-clear">${esc(t.histClear)}</button></div></section>`;
+  }
   h+=`<section class="panel"><h3>${esc(t.tipsTitle)}</h3><ul>`+t.tips[lv].map(x=>`<li><span>${esc(x)}</span></li>`).join('')+`</ul></section>`;
   h+=`<section class="panel"><h3>${esc(t.shareTitle)}</h3><p>${esc(t.shareNote)}</p>`+
     `<label class="check"><input type="checkbox" id="inc-score" ${S.incScore?'checked':''}> ${esc(t.incScore)}</label>`+
@@ -719,6 +798,7 @@ function renderResult(){
     `<a class="btn" id="inv-tg" target="_blank" rel="noopener">Telegram</a><a class="btn" id="inv-wa" target="_blank" rel="noopener">WhatsApp</a></div></section>`;
   h+=`<p class="about">${esc(t.about)}</p>`;
   resEl.innerHTML=h;
+  const hc=$('hist-clear'); if(hc) hc.addEventListener('click',()=>{ try{localStorage.removeItem('lh-history');}catch(e){} hc.textContent=t.histCleared; hc.disabled=true; });
   ['sos','fam','inv'].forEach(k=>{ const ta=$(k+'-msg'); if(!ta) return; const upd=()=>{const l=shareLinks(ta.value); $(k+'-tg').href=l.tg; $(k+'-wa').href=l.wa;}; ta.addEventListener('input',upd); upd(); });
   const inc=$('inc-score'); inc.addEventListener('change',()=>{ S.incScore=inc.checked; const ta=$('fam-msg'); ta.value=famText(); ta.dispatchEvent(new Event('input')); });
   resEl.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',()=>{
@@ -735,25 +815,44 @@ function applyStatic(){
   document.querySelectorAll('[data-t]').forEach(el=>el.textContent=L()[el.dataset.t]);
   $('privacy').textContent=L().privacy; cv.setAttribute('aria-label',L().canvas);
   $('lang-ru').setAttribute('aria-pressed',lang==='ru'); $('lang-en').setAttribute('aria-pressed',lang==='en');
-  renderSound();
+  renderSound(); renderFont();
 }
 // Speaker icon drawn from square "pixels"; waves only when the sound is on
 function renderSound(){
-  const b=$('snd'), v=Music.on;
+  const b=$('snd'), v=Music.playing;
   b.setAttribute('aria-pressed',v); b.setAttribute('aria-label',v?L().soundOn:L().soundOff); b.title=b.getAttribute('aria-label');
   b.innerHTML=`<svg viewBox="0 0 10 10" shape-rendering="crispEdges" fill="currentColor" aria-hidden="true"><rect x="1" y="4" width="2" height="2"/><rect x="3" y="3" width="1" height="4"/><rect x="4" y="2" width="1" height="6"/>${v?'<rect x="6" y="4" width="1" height="2"/><rect x="7" y="2" width="1" height="1"/><rect x="8" y="3" width="1" height="4"/><rect x="7" y="7" width="1" height="1"/>':'<rect x="6" y="3" width="1" height="1"/><rect x="7" y="4" width="1" height="2"/><rect x="8" y="3" width="1" height="1"/><rect x="6" y="6" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/>'}</svg>`;
 }
-$('snd').addEventListener('click',()=>{ Music.setOn(!Music.on); renderSound(); });
+$('snd').addEventListener('click',()=>{ Music.setOn(!Music.playing); setTimeout(renderSound,150); renderSound(); });
+function renderFont(){ const b=$('fnt'); b.setAttribute('aria-pressed',plainFont); const l=plainFont?L().fontPixel:L().fontPlain; b.setAttribute('aria-label',l); b.title=l; }
+$('fnt').addEventListener('click',()=>{ plainFont=!plainFont; try{localStorage.setItem('lh-font',plainFont?'plain':'pixel');}catch(e){} document.documentElement.classList.toggle('plainfont',plainFont); renderFont(); });
 function setLang(l){
   if(l===lang) return; lang=l; try{localStorage.setItem('lh-lang',l);}catch(e){}
   applyStatic();
-  ({title:goTitle,intro:goIntro,ask:()=>ask(S.idx),ask10:ask10,end:goEnd,result:()=>showResult(false),
+  ({title:goTitle,intro:goIntro,ask:()=>ask(S.idx),ask10:ask10,end:goEnd,result:()=>showResult(false),saved:showSaved,
     walk:()=>show({text:L().walking[S.idx%L().walking.length]})}[S.phase]||goTitle)();
 }
 $('lang-ru').addEventListener('click',()=>setLang('ru'));
 $('lang-en').addEventListener('click',()=>setLang('en'));
 
-applyStatic(); goTitle(); requestAnimationFrame(loop);
+// A saved link opens straight onto the result card. The hash is removed from the address bar right away,
+// before the page-view counter loads, so the score never leaves the device.
+function readSaved(){
+  const m=/^#r=1\.(\d{1,2})\.([0-3x])\.(\d{4})(\d{2})(\d{2})$/.exec(location.hash||''); if(!m) return null;
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  const s=+m[1]; if(s>27) return null;
+  const d=new Date(+m[3],+m[4]-1,+m[5]); if(isNaN(d)) return null;
+  return {s,df:m[2]==='x'?null:+m[2],q9:0,date:d};
+}
+function showSaved(){
+  S.phase='saved'; S.final=true; S.px=stopX(9); S.target=S.px; overlay.hidden=true;
+  renderResult(); resEl.hidden=false;
+  show({who:L().keeper,text:L().savedLine(fmtDate(S.view.date)),choices:[{label:L().walkNow,act:restart}]});
+}
+const savedView=readSaved();
+applyStatic();
+if(savedView){ S.view=savedView; showSaved(); } else goTitle();
+requestAnimationFrame(loop);
 })();
 </script>
 
