@@ -157,6 +157,52 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 .legend i{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:4px}
 .moments{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px 12px;font-size:13px;color:var(--muted)}
 .moments b{color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums}
+/* Settings */
+.setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.setrow .sl{display:flex;flex-direction:column;gap:2px}
+.setrow .sl small{font-size:12px;color:var(--muted)}
+.seg{display:flex}
+.seg button{background:var(--panel2);border:2px solid var(--line);padding:7px 12px;font-size:14px}
+.seg button+button{border-left:0}
+.seg button.on{background:var(--amber);color:#2b1700;border-color:#000;font-weight:600}
+/* Dialog buttons wake up a moment after the dialog opens, so fast clicking on the hero can't pick an option by accident */
+.choices.arming .choice{opacity:.45;cursor:default;transition:none}
+.choices .choice{transition:opacity .2s}
+/* HD graphics: the canvas is rendered at 4x and scaled smoothly */
+#stage.hd{image-rendering:auto}
+/* Readable font option: system font everywhere in the UI, a bit larger */
+html.plainfont{--display:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;--body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+html.plainfont h1{font-size:clamp(18px,2.6vw,24px);font-weight:800;letter-spacing:0}
+html.plainfont .stat .v{font-size:17px;font-weight:700}
+html.plainfont .buy{font-size:13px;font-weight:700}
+html.plainfont .barRow .num{font-size:13px;font-weight:600}
+html.plainfont .sec h3,html.plainfont .box h3{font-size:14px;font-weight:700;letter-spacing:0}
+html.plainfont .box h2{font-size:20px;font-weight:700}
+html.plainfont .box .big{font-size:28px;font-weight:800}
+html.plainfont .tapHint,html.plainfont .newEnd,html.plainfont .toast b{font-size:12px;font-weight:700}
+html.plainfont .float{font-size:15px;font-weight:800}
+html.plainfont .float.xp,html.plainfont .float.tired,html.plainfont .float.calm{font-size:13px}
+html.plainfont #retire{font-size:15px;font-weight:800}
+html.plainfont .mhud b{font-size:13px;font-weight:700}
+html.plainfont .mbar b{font-size:11px;font-weight:700}
+/* Mobile: stats, the hero and the key bars stay pinned at the top while the shop scrolls underneath */
+.stick{display:flex;flex-direction:column;gap:12px}
+.mhud,.mbars{display:none}
+@media (max-width:860px){
+  .col.play{display:contents}
+  .stick{position:sticky;top:0;z-index:6;background:var(--bg);margin-inline:-16px;padding:8px 16px 10px;gap:8px;box-shadow:0 8px 10px -8px rgba(0,0,0,.7);order:1}
+  .tip{order:2}.calmRow{order:3}.wrap>.col:not(.play){order:4}.hud{order:5}.bars{order:6}
+  #stageWrap{width:100%;max-width:calc(30vh * 1.6);margin-inline:auto}
+  .mhud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  .mhud div{background:var(--panel);border:2px solid var(--line);padding:4px 6px;min-width:0}
+  .mhud span{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mhud b{display:block;font-family:var(--display);font-size:10px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+  .mhud b.money{color:var(--money)}
+  .mbars{display:grid;gap:4px}
+  .mbar{display:grid;grid-template-columns:70px minmax(0,1fr) 52px;gap:8px;align-items:center;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .mbar b{font-family:var(--display);font-size:8px;font-weight:400;color:var(--fg);text-align:right;white-space:nowrap}
+  .bar.sm{height:9px;border-width:1px}
+}
 .foot{max-width:1320px;margin:14px auto 0;font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.float{animation-duration:.01s}#retire,.item.hl{animation:none}.toast{animation:none}}
 </style>
@@ -169,9 +215,7 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
     <button class="tbtn" id="collBtn" data-en="Collection">Коллекция</button>
     <button class="tbtn" id="speedBtn">×1</button>
     <button class="tbtn" id="pauseBtn"></button>
-    <button class="tbtn" id="musicBtn"></button>
-    <button class="tbtn" id="soundBtn"></button>
-    <button class="tbtn" id="langBtn"></button>
+    <button class="tbtn" id="setBtn" data-en="Settings">Настройки</button>
   </div>
 </header>
 
@@ -190,10 +234,24 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 
     <div class="tip" id="tip" hidden></div>
 
+    <div class="stick">
+    <div class="mhud">
+      <div><span id="mGrade">Intern</span><b id="mAge">22</b></div>
+      <div><span data-en="Cash">Кэш</span><b class="money" id="mCash">$0</b></div>
+      <div><span data-en="Capital">Капитал</span><b class="money" id="mNw">$0</b></div>
+      <div><span>FIRE</span><b id="mFire">0%</b></div>
+    </div>
     <div id="stageWrap">
       <canvas id="stage" width="192" height="120" tabindex="0" role="button" aria-label="Работать: кликай по разработчику" data-en-aria="Work: click the developer"></canvas>
       <div id="vign"></div>
       <div class="tapHint" id="tapHint" data-en="CLICK TO WORK">КЛИКАЙ, ЧТОБЫ РАБОТАТЬ</div>
+    </div>
+    <div class="mbars">
+      <div class="mbar"><span data-en="Energy">Энергия</span><div class="bar sm"><i id="meBar" style="--c:var(--energy)"></i></div><b id="meNum">100</b></div>
+      <div class="mbar"><span data-en="XP">Опыт</span><div class="bar sm"><i id="mxBar" style="--c:var(--xp)"></i></div><b id="mxNum">0%</b></div>
+      <div class="mbar"><span data-en="Burnout">Выгорание</span><div class="bar sm"><i id="mbBar" style="--c:var(--warn)"></i></div><b id="mbNum">0%</b></div>
+    </div>
+    <button id="retire" hidden data-en="QUIT FOREVER">УВОЛИТЬСЯ НАВСЕГДА</button>
     </div>
 
     <div class="calmRow">
@@ -208,7 +266,6 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
       <div class="barRow"><span class="lbl" data-en="FIRE goal">Цель FIRE</span><div class="bar"><i id="fBar" style="--c:var(--money)"></i></div><span class="num" id="fNum">$0</span></div>
       <div class="eta" id="eta"></div>
     </div>
-    <button id="retire" hidden data-en="QUIT FOREVER">УВОЛИТЬСЯ НАВСЕГДА</button>
   </div>
 
   <div class="col">
@@ -223,6 +280,7 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 
 <div id="modal" class="overlay" hidden><div class="box" role="dialog" aria-modal="true"><h2 id="mTitle"></h2><div id="mBody"></div><div class="choices" id="mChoices"></div></div></div>
 <div id="coll" class="overlay" hidden><div class="box wide" role="dialog" aria-modal="true"><h2 data-en="Collection">Коллекция</h2><div id="cBody"></div><div class="choices"><button class="choice primary" id="cClose" data-en="Close">Закрыть</button></div></div></div>
+<div id="settings" class="overlay" hidden><div class="box" role="dialog" aria-modal="true"><h2 data-en="Settings">Настройки</h2><div id="sBody"></div><div class="choices"><button class="choice primary" id="sClose" data-en="Close">Закрыть</button></div></div></div>
 <div id="toasts" aria-live="polite"></div>
 
 <script>
@@ -232,6 +290,10 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 const LANG=(()=>{try{const s=localStorage.getItem('car_lang');if(s==='ru'||s==='en')return s;}catch(e){}return /^(ru|uk|be|kk)/i.test(navigator.language||'')?'ru':'en';})();
 const T=(ru,en)=>LANG==='en'?en:ru;
 document.documentElement.lang=LANG;
+// Display preferences: readable UI font and HD graphics
+let fontMode=(()=>{try{return localStorage.getItem('car_font')==='plain'?'plain':'pixel';}catch(e){return'pixel';}})();
+let gfxMode=(()=>{try{return localStorage.getItem('car_gfx')==='hd'?'hd':'classic';}catch(e){return'classic';}})();
+document.documentElement.classList.toggle('plainfont',fontMode==='plain');
 if(LANG==='en'){
   document.querySelectorAll('[data-en]').forEach(el=>el.textContent=el.dataset.en);
   document.querySelectorAll('[data-en-aria]').forEach(el=>el.setAttribute('aria-label',el.dataset.enAria));
@@ -501,7 +563,10 @@ setInterval(musicTick,60);
 function modal(title,html,choices){
   modalOpen=true;$('mTitle').textContent=title;$('mBody').innerHTML=html;const c=$('mChoices');c.innerHTML='';
   choices.forEach(ch=>{const b=document.createElement('button');b.className='choice'+(ch.primary?' primary':'')+(ch.cls?' '+ch.cls:'');b.textContent=ch.l;b.onclick=()=>{ensureAudio();if(!ch.keep)closeModal();ch.f&&ch.f();};c.append(b);});
-  $('modal').hidden=false;setTimeout(()=>c.firstChild&&c.firstChild.focus(),30);
+  $('modal').hidden=false;
+  if(SIM)return;
+  const bs=[...c.children];c.classList.add('arming');bs.forEach(b=>b.disabled=true);
+  setTimeout(()=>{c.classList.remove('arming');bs.forEach(b=>b.disabled=false);c.firstChild&&c.firstChild.focus();},600);
 }
 function closeModal(){modalOpen=false;$('modal').hidden=true;}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -822,6 +887,12 @@ function renderHUD(){
   const f=fire(),w=nw();$('fBar').style.width=Math.max(0,Math.min(1,w/f))*100+'%';$('fNum').textContent=`${fmt(w)} / ${fmt(f)}`;
   $('retire').hidden=!(S.started&&!S.over&&w>=f);
   renderEta(w,f);
+  // pinned mobile stats
+  setText($('mGrade'),gradeName());setText($('mAge'),S.age.toFixed(1));setText($('mCash'),fmt(S.cash));$('mCash').style.color=S.cash<0?'var(--energy)':'';
+  setText($('mNw'),fmt(w));setText($('mFire'),Math.min(100,Math.floor(w/f*100))+'%');$('mFire').style.color=w>=f?'var(--money)':'';
+  $('meBar').style.width=S.energy+'%';setText($('meNum'),`${Math.round(S.energy)} ${net>=0?'+':'−'}${Math.abs(net).toFixed(1)}`);
+  const xp=S.barista?0:S.grade<GR.length-1?Math.min(1,S.xp/need()):1;$('mxBar').style.width=xp*100+'%';setText($('mxNum'),S.barista?'—':Math.round(xp*100)+'%');
+  $('mbBar').style.width=S.burn+'%';setText($('mbNum'),Math.round(S.burn)+'%');
   const cb=$('calmBtn');setText(cb,`${T('Работать спокойно','Steady work')}: ${S.calm?T('вкл','on'):T('выкл','off')}`);cb.classList.toggle('on',!!S.calm);
   setText($('calmHint'),S.calm&&calmResting?T('Герой отдыхает и вернётся к работе, когда энергия восстановится до 50%.','The hero is resting and will resume once energy is back to 50%.'):T('Герой сам работает вполсилы, 2 раза в секунду. Отдыхает, когда энергии меньше 30%.','The hero works on autopilot at half power, 2 times a second. Rests when energy drops below 30%.'));
 }
@@ -913,7 +984,46 @@ $('cClose').onclick=()=>{collOpen=false;$('coll').hidden=true;};
 
 /* ---------- pixel scene ---------- */
 const cv=$('stage'),cx=cv.getContext('2d');cx.imageSmoothingEnabled=false;
-const R=(x,y,w,h,c)=>{cx.fillStyle=c;cx.fillRect(x|0,y|0,w|0,h|0);};
+let HD=false;
+// In HD every larger block gets a light top edge and a dark bottom edge, which reads as volume at 4x resolution
+const R=(x,y,w,h,c)=>{x|=0;y|=0;w|=0;h|=0;cx.fillStyle=c;cx.fillRect(x,y,w,h);if(HD&&w>=4&&h>=3){cx.fillStyle='rgba(255,255,255,.08)';cx.fillRect(x,y,w,.5);cx.fillStyle='rgba(0,0,0,.16)';cx.fillRect(x,y+h-.5,w,.5);}};
+function applyGfx(){HD=gfxMode==='hd';const k=HD?4:1;cv.width=192*k;cv.height=120*k;cx.setTransform(k,0,0,k,0,0);cx.imageSmoothingEnabled=false;cv.classList.toggle('hd',HD);}
+const hexA=(h,a)=>{const n=parseInt(h.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${a})`;};
+const ell=(x,y,rx,ry)=>{cx.beginPath();cx.ellipse(x,y,rx,ry,0,0,Math.PI*2);cx.fill();};
+function glow(x,y,r,col){const g=cx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col);g.addColorStop(1,col.replace(/[\d.]+\)$/,'0)'));cx.fillStyle=g;cx.fillRect(x-r,y-r,r*2,r*2);}
+function vignette(edge){const g=cx.createRadialGradient(100,58,38,100,58,132);g.addColorStop(0,'#ffffff');g.addColorStop(1,edge);cx.globalCompositeOperation='multiply';cx.fillStyle=g;cx.fillRect(0,0,192,120);}
+function windowSpill(x0,x1,y,sky){cx.filter='blur(2.5px)';const g=cx.createLinearGradient(0,y,0,120);g.addColorStop(0,hexA(sky,.26));g.addColorStop(1,hexA(sky,0));cx.fillStyle=g;cx.beginPath();cx.moveTo(x0,y);cx.lineTo(x1,y);cx.lineTo(x1+46,120);cx.lineTo(x0+16,120);cx.closePath();cx.fill();cx.filter='none';}
+// Dust drifting through the window light
+function dust(x0,y0,t){cx.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<12;i++){const px=x0+((i*37+t/70)%60)+((i*13)%9),py=y0+((i*23+t/110)%60);cx.fillRect(px,py,.5,.5);}}
+// HD lighting passes: contact shadows, daylight from the window, screen and lamp glow, a soft vignette
+function lightOffice(t){
+  const sky=SKY[Math.floor((S.age%1)*4)];cx.save();
+  cx.fillStyle='rgba(0,0,0,.3)';ell(84,92,22,2.5);ell(144,92,46,2.5);if(has('dog'))ell(26,113,12,2);if(has('gym'))ell(53,111,9,1.5);
+  cx.globalCompositeOperation='screen';
+  windowSpill(8,64,52,sky);glow(36,31,44,hexA(sky,.22));
+  const mons=[[130,38]];if(has('mon2'))mons.push([158,38]);if(has('mon3'))mons.push([144,14]);
+  for(const[mx,my]of mons){glow(mx+13,my+9,30,'rgba(124,196,255,.2)');cx.fillStyle='rgba(255,255,255,.06)';cx.beginPath();cx.moveTo(mx+4,my+1);cx.lineTo(mx+10,my+1);cx.lineTo(mx+5,my+17);cx.lineTo(mx+1,my+17);cx.closePath();cx.fill();}
+  if(S.coffeeShow>0)glow(124,58,8,'rgba(255,220,180,.15)');
+  dust(14,56,t);
+  // screen light on the hero's face and shoulder
+  cx.fillStyle='rgba(140,200,255,.4)';cx.fillRect(90,34,.5,9);cx.fillRect(90.5,46,.5,20);
+  vignette('#6a619c');cx.restore();
+}
+function lightCafe(t){
+  const sky=SKY[Math.floor((S.age%1)*4)];cx.save();
+  cx.fillStyle='rgba(0,0,0,.28)';ell(131,93,60,2.5);if(has('dog'))ell(26,115,12,2);
+  if(anim.cust){const e=t-anim.cust.t0,walk=2400,wait=3000;const x=e<walk?-14+(e/walk)*84:e<walk+wait?70:70-((e-walk-wait)/walk)*90;ell(x+6,118,9,1.8);}
+  cx.globalCompositeOperation='screen';
+  windowSpill(6,64,56,sky);glow(35,34,42,hexA(sky,.2));
+  const flick=.27+Math.sin(t/900)*.015;
+  glow(66,13,58,`rgba(255,190,110,${flick})`);glow(174,13,58,`rgba(255,190,110,${flick})`);
+  glow(141,52,14,'rgba(255,255,255,.07)');glow(174,60,16,'rgba(255,230,180,.12)');
+  cx.fillStyle='rgba(255,255,255,.12)';cx.fillRect(127,40,.5,24);cx.fillRect(128.5,40,.5,24);
+  dust(12,58,t);
+  // warm lamp light on the barista's hair and shoulders
+  cx.fillStyle='rgba(255,200,130,.35)';cx.fillRect(97,29,11,.5);cx.fillRect(96,44,13,.5);
+  vignette('#86675a');cx.restore();
+}
 const lerp=(a,b,t)=>a+(b-a)*t;
 function mix(c1,c2,t){t=Math.max(0,Math.min(1,t));const a=parseInt(c1.slice(1),16),b=parseInt(c2.slice(1),16);const r=Math.round(lerp(a>>16,b>>16,t)),g=Math.round(lerp(a>>8&255,b>>8&255,t)),bl=Math.round(lerp(a&255,b&255,t));return'#'+((1<<24)+(r<<16)+(g<<8)+bl).toString(16).slice(1);}
 const SKY=['#8fd3ff','#5fb6ff','#e8b088','#b8c7dd'],TREE=['#6fdc6f','#2fa84f','#ff8c3a','#eef3ff'];
@@ -1021,6 +1131,7 @@ function drawOffice(t){
   R(83,44,4,3,skin);
   drawHead(79,33+(S.energy/maxE()<.15?2:0),t);
   R(86,49,8,3,shirt);R(92,55,13,3,shirt);R(105,57+ty,3,2,skin);
+  if(HD)lightOffice(t);
   shade(t);
 }
 function drawDog(t,x,y){const w=Math.sin(t/120)>0?1:0;R(x,y,16,6,'#b5784a');R(x+14,y-3,6,6,'#b5784a');R(x+19,y-1,2,2,'#2b1a10');R(x+15,y-4,2,3,'#7a4a2a');R(x-3,y-2-w,3,2,'#b5784a');R(x+2,y+6,2,2,'#7a4a2a');R(x+12,y+6,2,2,'#7a4a2a');}
@@ -1077,6 +1188,7 @@ function drawCafe(t){
   for(let i=0;i<Math.min(3,Math.floor(S.clicks/10)%4);i++){R(76+i*7,60,4,6,'#efeaff');R(76+i*7,60,4,1,'#5a3b24');}
   drawCustomer(t);
   if(has('dog'))drawDog(t,18,108);
+  if(HD)lightCafe(t);
   shade(t);
 }
 // A customer walks up to the counter, waits for the order and leaves with a cup
@@ -1129,25 +1241,44 @@ function newGame(o={}){
 
 $('stage').addEventListener('pointerdown',e=>{e.preventDefault();work(e);});
 $('stage').addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&!e.repeat){e.preventDefault();work(null);}});
-document.addEventListener('keydown',e=>{if(e.key===' '&&document.activeElement===document.body&&!e.repeat&&!modalOpen&&!collOpen){e.preventDefault();work(null);}if(e.key==='Escape'&&collOpen)$('cClose').click();});
+document.addEventListener('keydown',e=>{if(e.key===' '&&document.activeElement===document.body&&!e.repeat&&!modalOpen&&!collOpen){e.preventDefault();work(null);}if(e.key==='Escape'&&collOpen){if(!$('settings').hidden)$('sClose').click();else $('cClose').click();}});
 $('shop').addEventListener('click',e=>{const b=e.target.closest('.buy');if(!b||b.disabled)return;ensureAudio();const it=ITEMS.find(i=>i.id===b.dataset.id);buyItem(it);renderShop();renderHUD();});
 const label=()=>{
   $('pauseBtn').textContent=S&&S.paused?T('Продолжить','Resume'):T('Пауза','Pause');
-  $('soundBtn').textContent=T('Звук: ','Sound: ')+(sound?T('вкл','on'):T('выкл','off'));
-  $('musicBtn').textContent=T('Музыка: ','Music: ')+(musicOn?T('вкл','on'):T('выкл','off'));
   $('speedBtn').textContent='×'+speed;$('speedBtn').classList.toggle('on',speed>1);
-  $('langBtn').textContent=LANG==='en'?'RU':'EN';
 };
+/* ---------- settings ---------- */
+const SETTINGS=[
+ {k:'font',t:T('Шрифт','Font'),d:T('Обычный легче читать, сцена остаётся пиксельной','Regular is easier to read; the scene stays pixel art'),opts:[['pixel',T('Пиксельный','Pixel')],['plain',T('Обычный','Regular')]]},
+ {k:'gfx',t:T('Графика','Graphics'),d:T('HD: те же пиксели, но со светом, тенями и объёмом','HD: same pixels, plus lighting, shadows and depth'),opts:[['classic',T('Классика','Classic')],['hd','HD']]},
+ {k:'music',t:T('Музыка','Music'),opts:[['on',T('Вкл','On')],['off',T('Выкл','Off')]]},
+ {k:'sound',t:T('Звуки','Sounds'),opts:[['on',T('Вкл','On')],['off',T('Выкл','Off')]]},
+ {k:'lang',t:T('Язык','Language'),opts:[['ru','Русский'],['en','English']]}
+];
+const getSet=k=>k==='font'?fontMode:k==='gfx'?gfxMode:k==='music'?(musicOn?'on':'off'):k==='sound'?(sound?'on':'off'):LANG;
+function setSet(k,v){
+  if(getSet(k)===v)return;track('setting_change',{setting:k,value:v});
+  if(k==='font'){fontMode=v;try{localStorage.setItem('car_font',v);}catch(e){}document.documentElement.classList.toggle('plainfont',v==='plain');}
+  if(k==='gfx'){gfxMode=v;try{localStorage.setItem('car_gfx',v);}catch(e){}applyGfx();}
+  if(k==='music'){musicOn=v==='on';store.set('car_music',musicOn);ensureAudio();}
+  if(k==='sound'){sound=v==='on';store.set('car_sound',sound);}
+  if(k==='lang'){try{localStorage.setItem('car_lang',v);}catch(e){}if(S&&S.started&&!S.over)store.set(SAVE,S);location.reload();return;}
+  renderSettings();
+}
+function renderSettings(){
+  $('sBody').innerHTML=SETTINGS.map(o=>`<div class="setrow"><div class="sl"><span>${o.t}</span>${o.d?`<small>${o.d}</small>`:''}</div><div class="seg">${o.opts.map(([v,l])=>`<button data-k="${o.k}" data-v="${v}" class="${getSet(o.k)===v?'on':''}" aria-pressed="${getSet(o.k)===v}">${l}</button>`).join('')}</div></div>`).join('');
+}
+$('sBody').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(b)setSet(b.dataset.k,b.dataset.v);});
+$('setBtn').onclick=()=>{renderSettings();collOpen=true;$('settings').hidden=false;$('sClose').focus();};
+$('sClose').onclick=()=>{collOpen=false;$('settings').hidden=true;};
 $('pauseBtn').onclick=()=>{if(!S.started||S.over)return;S.paused=!S.paused;label();};
-$('soundBtn').onclick=()=>{sound=!sound;store.set('car_sound',sound);label();};
-$('musicBtn').onclick=()=>{musicOn=!musicOn;store.set('car_music',musicOn);ensureAudio();track('music_toggle',{on:musicOn});label();};
 $('speedBtn').onclick=()=>{speed=speed===1?2:speed===2?4:1;track('speed_change',{speed});label();};
-$('langBtn').onclick=()=>{const next=LANG==='en'?'ru':'en';try{localStorage.setItem('car_lang',next);}catch(e){}track('lang_switch',{to:next});if(S&&S.started&&!S.over)store.set(SAVE,S);location.reload();};
 $('collBtn').onclick=showCollection;
 $('calmBtn').onclick=()=>{if(!S.started||S.over)return;ensureAudio();S.calm=!S.calm;calmAcc=0;calmResting=false;track('toggle',{item:'calm',on:S.calm});renderHUD();};
 $('retire').onclick=()=>{if(nw()<fire())return;modal(T('Уволиться навсегда?','Quit forever?'),`<p>${T(`Тебе ${S.age.toFixed(1)}. Капитал ${fmt(nw())} при цели ${fmt(fire())}. Ноутбук можно вернуть в IT-отдел.`,`You are ${S.age.toFixed(1)}. Net worth ${fmt(nw())} against a goal of ${fmt(fire())}. The laptop can go back to IT.`)}</p>`,[{l:T('Да, на пенсию','Yes, retire'),primary:true,f(){ending('fire');}},{l:T('Ещё поработаю','I will keep working'),f(){}}]);};
 
 function start(data){
+  applyGfx();
   S=(data&&data.S)||fresh();
   if(data&&data.S){afterLoad();}else{intro();}
   label();renderHUD();renderShop(true);requestAnimationFrame(frame);
