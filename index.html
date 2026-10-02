@@ -188,7 +188,7 @@ h1{font-family:var(--display);font-size:clamp(14px,2.4vw,20px);margin:0;letter-s
 
     <div class="calmRow">
       <button class="tbtn" id="calmBtn"></button>
-      <span class="hint" id="calmHint" data-en="The hero works on autopilot at half power, 2 times a second. Rests when energy drops below 30%.">Герой сам работает вполсилы, 2 раза в секунду. Отдыхает, когда энергии меньше 30%.</span>
+      <span class="hint" id="calmHint"></span>
     </div>
 
     <div class="bars">
@@ -494,11 +494,15 @@ function work(ev){
   if(S.clicks%3===0)floatTxt('+'+(3*xpMult()*burnMult()).toFixed(1)+' XP',x+18,y+14,'xp');
   $('tapHint').hidden=true;
 }
-// Steady work: half the money and half the energy per action, twice a second, resting below 30% energy
+// Steady work: half the money and half the energy per action, twice a second.
+// Rests below 30% energy and resumes only at 50%, so it does not flicker around a single threshold
 function autoWork(){
   const cost=clickCost()*.5;
-  if(S.energy/maxE()<.3||S.energy-cost<10){calmResting=true;return;}
-  calmResting=false;S.energy-=cost;const g=clickGain()*.5;earn(g);S.xp+=xpMult()*burnMult()*.5;typeCode();
+  const er=S.energy/maxE();
+  if(calmResting&&er>=.5)calmResting=false;
+  if(!calmResting&&(er<.3||S.energy-cost<10))calmResting=true;
+  if(calmResting)return;
+  S.energy-=cost;const g=clickGain()*.5;earn(g);S.xp+=xpMult()*burnMult()*.5;typeCode();
   const r=$('stageWrap').getBoundingClientRect();if(g>0&&Math.random()<.5)floatTxt('+'+fmt(g),r.width*(.5+Math.random()*.2),r.height*.45,'calm');
 }
 function floatTxt(t,x,y,cls){const d=document.createElement('div');d.className='float '+cls;d.textContent=t;d.style.left=(x-20+Math.random()*16)+'px';d.style.top=(y-10)+'px';$('stageWrap').append(d);setTimeout(()=>d.remove(),950);}
@@ -735,7 +739,8 @@ function renderHUD(){
   $('bBar').style.width=S.burn+'%';$('bNum').textContent=S.burn>=1?`${Math.round(S.burn)}% · ${T('доход','income')} −${Math.round(S.burn/2)}%`:'0%';
   const f=fire(),w=nw();$('fBar').style.width=Math.max(0,Math.min(1,w/f))*100+'%';$('fNum').textContent=`${fmt(w)} / ${fmt(f)}`;
   $('retire').hidden=!(S.started&&!S.over&&w>=f);
-  const cb=$('calmBtn');cb.textContent=`${T('Работать спокойно','Steady work')}: ${S.calm?(calmResting?T('отдых','resting'):T('вкл','on')):T('выкл','off')}`;cb.classList.toggle('on',!!S.calm);
+  const cb=$('calmBtn');setText(cb,`${T('Работать спокойно','Steady work')}: ${S.calm?T('вкл','on'):T('выкл','off')}`);cb.classList.toggle('on',!!S.calm);
+  setText($('calmHint'),S.calm&&calmResting?T('Герой отдыхает и вернётся к работе, когда энергия восстановится до 50%.','The hero is resting and will resume once energy is back to 50%.'):T('Герой сам работает вполсилы, 2 раза в секунду. Отдыхает, когда энергии меньше 30%.','The hero works on autopilot at half power, 2 times a second. Rests when energy drops below 30%.'));
 }
 // The shop DOM is rebuilt only when the set of visible items changes; every tick just patches text and button state in place
 let shopStruct='', shopRows={};
@@ -964,7 +969,7 @@ $('musicBtn').onclick=()=>{musicOn=!musicOn;store.set('car_music',musicOn);ensur
 $('speedBtn').onclick=()=>{speed=speed===1?2:speed===2?4:1;track('speed_change',{speed});label();};
 $('langBtn').onclick=()=>{const next=LANG==='en'?'ru':'en';try{localStorage.setItem('car_lang',next);}catch(e){}track('lang_switch',{to:next});if(S&&S.started&&!S.over)store.set(SAVE,S);location.reload();};
 $('collBtn').onclick=showCollection;
-$('calmBtn').onclick=()=>{if(!S.started||S.over)return;ensureAudio();S.calm=!S.calm;calmAcc=0;track('toggle',{item:'calm',on:S.calm});renderHUD();};
+$('calmBtn').onclick=()=>{if(!S.started||S.over)return;ensureAudio();S.calm=!S.calm;calmAcc=0;calmResting=false;track('toggle',{item:'calm',on:S.calm});renderHUD();};
 $('retire').onclick=()=>{if(nw()<fire())return;modal(T('Уволиться навсегда?','Quit forever?'),`<p>${T(`Тебе ${S.age.toFixed(1)}. Капитал ${fmt(nw())} при цели ${fmt(fire())}. Ноутбук можно вернуть в IT-отдел.`,`You are ${S.age.toFixed(1)}. Net worth ${fmt(nw())} against a goal of ${fmt(fire())}. The laptop can go back to IT.`)}</p>`,[{l:T('Да, на пенсию','Yes, retire'),primary:true,f(){ending('fire');}},{l:T('Ещё поработаю','I will keep working'),f(){}}]);};
 
 function start(data){
